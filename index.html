@@ -1,0 +1,724 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Emily, Amy in SHANGHAI</title>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <style>
+    :root {
+      --bg: #ffffff;
+      --panel: #fff7fb;
+      --panel2: #ffffff;
+      --muted: #5c5f66;
+      --text: #1f2328;
+      --line: rgba(31,35,40,0.12);
+      --accent: #ff6fae;
+      --accent2: #2b2f36;
+    }
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", Arial;
+    }
+    .wrap {
+      height: 100%;
+      display: flex;
+      gap: 12px;
+      padding: 12px;
+      box-sizing: border-box;
+    }
+    .left {
+      width: min(580px, 48vw);
+      min-width: 360px;
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .header {
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, var(--panel), var(--panel2));
+    }
+    .toprow {
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    .header h1 {
+      font-size: 15px;
+      margin: 0 0 6px;
+      letter-spacing: 0.2px;
+    }
+    .sub {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .tabs {
+      display:flex; gap:8px; flex-wrap:wrap;
+    }
+    .tab {
+      border: 1px solid var(--line);
+      background: #ffffff;
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: 750;
+      cursor: pointer;
+      color: var(--accent2);
+    }
+    .tab.active {
+      border-color: rgba(255,111,174,0.45);
+      background: rgba(255,111,174,0.14);
+    }
+
+    .list {
+      overflow: auto;
+      padding: 12px;
+      background: var(--panel2);
+    }
+    .item {
+      display: grid;
+      grid-template-columns: 64px 1fr;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      margin-bottom: 12px;
+      background: var(--panel);
+      cursor: pointer;
+      box-shadow: 0 6px 16px rgba(31,35,40,0.06);
+      transition: transform .08s ease, box-shadow .08s ease;
+    }
+    .item:hover { box-shadow: 0 10px 22px rgba(31,35,40,0.08); }
+    .item:active { transform: scale(0.99); }
+    .time {
+      font-weight: 800;
+      font-size: 12px;
+      color: var(--accent2);
+      align-self: start;
+      padding-top: 2px;
+      display:flex;
+      gap:6px;
+      align-items:center;
+    }
+    .time .emoji {
+      font-size: 14px;
+      line-height: 1;
+    }
+    .name {
+      font-size: 13px;
+      line-height: 1.35;
+      font-weight: 650;
+    }
+    .queryRow {
+      margin-top: 8px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .qInput {
+      flex: 1;
+      font-size: 11.5px;
+      color: var(--text);
+      background: #ffffff;
+      border: 1px solid var(--line);
+      padding: 8px 10px;
+      border-radius: 12px;
+      outline: none;
+    }
+    .btn {
+      font-size: 11.5px;
+      font-weight: 750;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #ffffff;
+      color: var(--accent2);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn.primary {
+      border-color: rgba(255,111,174,0.35);
+      background: rgba(255,111,174,0.12);
+      color: var(--accent2);
+    }
+
+    .btn.danger {
+      border-color: rgba(180,35,90,0.25);
+      background: rgba(180,35,90,0.10);
+      color: #b4235a;
+    }
+    .btn.mini {
+      padding: 6px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .status {
+      margin-top: 6px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .status.warn {
+      color: #b4235a;
+      font-weight: 650;
+    }
+    .hint {
+      padding: 12px 16px 16px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+      background: var(--panel2);
+    }
+
+    .right {
+      flex: 1;
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 10px 24px rgba(31,35,40,0.08);
+    }
+    #map { height: 100%; width: 100%; }
+    .badge {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      z-index: 999;
+      background: rgba(255, 247, 251, 0.92);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 8px 12px;
+      font-size: 12px;
+      color: var(--accent2);
+      backdrop-filter: blur(6px);
+      max-width: calc(100% - 24px);
+    }
+    .badge b { color: var(--accent); }
+  
+    /* Hide apply buttons (Enter still applies) */
+    button[id^="apply-"] { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="left">
+      <div class="header">
+        <div class="toprow">
+          <div>
+            <h1>Emily, Amy in SHANGHAI</h1>
+            <div class="sub" id="subtitle">탭을 바꾸면 해당 일차의 스팟/동선이 바뀐다.</div>
+          </div>
+          <div class="tabs" id="tabs"></div>
+        </div>
+      </div>
+      <div class="list" id="list"></div>
+
+      <div style="padding: 0 12px 12px; background: var(--panel2);">
+        <button class="btn primary" id="addStopBtn" style="width:100%; padding: 10px 12px; border-radius: 14px;">
+          ➕ 스팟 추가
+        </button>
+      </div>
+
+      <div class="hint">
+        • Query 수정 후 <b>Enter</b> 치면 해당 스팟만 다시 인식한다.<br/>
+        • 왼쪽 카드 클릭 = 오른쪽 지도에서 해당 스팟으로 이동.
+      </div>
+    </section>
+
+    <section class="right">
+      <div class="badge" id="routeHint">동선 힌트</div>
+      <div id="map"></div>
+    </section>
+  </div>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+  <script>
+    const days = [
+  {
+    "id": "day1",
+    "label": "Day 1 (5/23)",
+    "route_hint": "PVG → 난징동루 → 난징서루/징안 → 프렌치콘세션 → 와이탄 → 호텔",
+    "stops": [
+      {
+        "time": "10:00",
+        "emoji": "✈️",
+        "name": "PVG 도착",
+        "query": "Shanghai Pudong International Airport, Shanghai"
+      },
+      {
+        "time": "11:30",
+        "emoji": "💅",
+        "name": "네일+속눈썹 (小黑瓶美甲美睫)",
+        "query": "Shanghai Jing'an No.118, Wuzhen Road"
+      },
+      {
+        "time": "14:00",
+        "emoji": "🍲",
+        "name": "점심: 东北人家(广西北路)",
+        "query": "430, Guangxi North Road, Shanghai"
+      },
+      {
+        "time": "15:10",
+        "emoji": "🧸",
+        "name": "홍이플라자 (Pop Mart + Sanrio + Miniso)",
+        "query": "Huangpu 299, Nanjing East Road"
+      },
+      {
+        "time": "16:40",
+        "emoji": "🎀",
+        "name": "SHUSHU/TONG (南京西路)",
+        "query": "No. 1225, Nanjing West Road, Shanghai"
+      },
+      {
+        "time": "17:30",
+        "emoji": "🖼️",
+        "name": "永源路 문화공간",
+        "query": "永源路, Shanghai"
+      },
+      {
+        "time": "18:15",
+        "emoji": "🛍️",
+        "name": "BASEMENT FG (新乐路82号)",
+        "query": "Xuhui No.82, Shanghai"
+      },
+      {
+        "time": "18:45",
+        "emoji": "👗",
+        "name": "Subdued (武康路378号)",
+        "query": "Xuhui No.378, Shanghai"
+      },
+      {
+        "time": "19:30",
+        "emoji": "🪞",
+        "name": "Room 707 (瑞金二路/인근)",
+        "query": "Huangpu Ruijin 2nd Road"
+      },
+      {
+        "time": "21:00",
+        "emoji": "🌃",
+        "name": "야경 식당: Regent on the Bund",
+        "query": "Regent Shanghai on the Bund"
+      },
+      {
+        "time": "23:10",
+        "emoji": "🏨",
+        "name": "호텔: JI Hotel (Sichuan Zhong Rd)",
+        "query": "607 Sichuan Zhong Road, Shanghai"
+      }
+    ]
+  },
+  {
+    "id": "day2",
+    "label": "Day 2 (5/24)",
+    "route_hint": "호텔 → 헤드스파 → 우캉 → 点都德 → 荣宅 → 유람선 → 와이탄/동방명주 → 훠궈 → 호텔",
+    "stops": [
+      {
+        "time": "09:30",
+        "emoji": "🏨",
+        "name": "호텔 출발",
+        "query": "607 Sichuan Zhong Road, Shanghai"
+      },
+      {
+        "time": "10:15",
+        "emoji": "💆‍♀️",
+        "name": "헤드스파",
+        "query": "外滩街道九江路 200-1"
+      },
+      {
+        "time": "11:40",
+        "emoji": "📸",
+        "name": "우캉맨숀",
+        "query": "武康大楼, Shanghai"
+      },
+      {
+        "time": "13:10",
+        "emoji": "🥟",
+        "name": "点都德 (苏河湾/福建北路)",
+        "query": "fujian north road no.100"
+      },
+      {
+        "time": "14:20",
+        "emoji": "🏛️",
+        "name": "Prada 荣宅",
+        "query": "186 North Shaanxi Rd"
+      },
+      {
+        "time": "16:30",
+        "emoji": "⛴️",
+        "name": "황푸강 유람선",
+        "query": "黄浦江游览（十六铺码头）"
+      },
+      {
+        "time": "18:00",
+        "emoji": "📸",
+        "name": "와이탄",
+        "query": "外滩 上海市黄浦区中山东一路"
+      },
+      {
+        "time": "18:40",
+        "emoji": "🗼",
+        "name": "동방명주",
+        "query": "东方明珠电视塔"
+      },
+      {
+        "time": "20:00",
+        "emoji": "🍲",
+        "name": "훠궈",
+        "query": "Shanghai, Pudong, Shangcheng Rd"
+      },
+      {
+        "time": "23:00",
+        "emoji": "🏨",
+        "name": "호텔 복귀",
+        "query": "607 Sichuan Zhong Road, Shanghai"
+      }
+    ]
+  },
+  {
+    "id": "day3",
+    "label": "Day 3 (5/25)",
+    "route_hint": "호텔 → 헤드스파 → 양꼬치(长寿路) → 1000 Trees(莫干山路) → SHA 출국",
+    "stops": [
+      {
+        "time": "09:30",
+        "emoji": "🏨",
+        "name": "호텔 출발",
+        "query": "607 Sichuan Zhong Road, Shanghai"
+      },
+      {
+        "time": "10:00",
+        "emoji": "💆‍♀️",
+        "name": "헤드스파(다른 곳)",
+        "query": "外滩街道九江路 200-1"
+      },
+      {
+        "time": "12:00",
+        "emoji": "🍢",
+        "name": "점심: 양꼬치",
+        "query": "432 Changshou Rd, Pu Tuo Qu, Shang Hai"
+      },
+      {
+        "time": "13:30",
+        "emoji": "🌳",
+        "name": "1000 Trees",
+        "query": "Moganshan Rd, Putuo, Shanghai"
+      },
+      {
+        "time": "14:30",
+        "emoji": "✈️",
+        "name": "SHA 공항 이동/출국",
+        "query": "Shanghai Hongqiao International Airport"
+      }
+    ]
+  }
+];
+    let currentDayIdx = 0;
+
+    const tabsEl = document.getElementById("tabs");
+    const listEl = document.getElementById("list");
+    const subtitleEl = document.getElementById("subtitle");
+    const routeHintEl = document.getElementById("routeHint");
+
+    const map = L.map('map', { zoomControl: true }).setView([31.2304, 121.4737], 11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    function makeEmojiIcon(emoji) {
+      return L.divIcon({
+        className: '',
+        html: `<div style="
+          width:30px;height:30px;border-radius:999px;
+          background: #e6e8ec;
+          display:flex;align-items:center;justify-content:center;
+          border: 2px solid #c9ced6;
+          box-shadow:0 8px 18px rgba(31,35,40,0.12);
+          font-size:16px;
+          ">{EMOJI}</div>`.replace('{EMOJI}', emoji || '📍'),
+        iconSize: [30,30],
+        iconAnchor: [15,15],
+      });
+    }
+
+    async function geocode(q) {
+      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`;
+      const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+      const data = await res.json();
+      if (!data || !data[0]) return null;
+      return {
+        lat: parseFloat(data[0].lat),
+        lon: parseFloat(data[0].lon),
+        display: data[0].display_name
+      };
+    }
+
+    // state per day
+    const state = days.map(d => {
+      return {
+        markersByStop: new Array(d.stops.length).fill(null),
+        coordsByStop:  new Array(d.stops.length).fill(null),
+        routeLine: null
+      };
+    });
+
+    function setStatus(i, text, isWarn=false) {
+      const el = document.getElementById(`status-${i}`);
+      if (!el) return;
+      el.textContent = text;
+      el.className = isWarn ? "status warn" : "status";
+    }
+
+    function clearMapForDay(dayIdx) {
+      const st = state[dayIdx];
+      // remove markers + line
+      st.markersByStop.forEach(m => { if (m) m.remove(); });
+      if (st.routeLine) st.routeLine.remove();
+      st.routeLine = null;
+      st.markersByStop = new Array(days[dayIdx].stops.length).fill(null);
+      st.coordsByStop  = new Array(days[dayIdx].stops.length).fill(null);
+    }
+
+    function updateLineForDay(dayIdx) {
+      const st = state[dayIdx];
+      const coords = st.coordsByStop.filter(Boolean);
+      if (st.routeLine) {
+        st.routeLine.remove();
+        st.routeLine = null;
+      }
+      if (coords.length >= 2) {
+        st.routeLine = L.polyline(coords, { weight: 4, opacity: 0.85 }).addTo(map);
+        map.fitBounds(st.routeLine.getBounds(), { padding: [24, 24] });
+      } else if (coords.length === 1) {
+        map.setView(coords[0], 14);
+      }
+    }
+
+    async function upsertMarker(dayIdx, i) {
+      const d = days[dayIdx];
+      const st = state[dayIdx];
+      const stop = d.stops[i];
+
+      setStatus(i, "자동 인식 중…");
+      const g = await geocode(stop.query);
+      if (!g) {
+        st.coordsByStop[i] = null;
+        setStatus(i, "⚠ 위치 자동 인식 실패 — Query를 더 정확한 주소/지점명으로 바꿔줘", true);
+        if (st.markersByStop[i]) {
+          st.markersByStop[i].remove();
+          st.markersByStop[i] = null;
+        }
+        updateLineForDay(dayIdx);
+        return;
+      }
+
+      const ll = [g.lat, g.lon];
+      st.coordsByStop[i] = ll;
+
+      let m = st.markersByStop[i];
+      if (!m) {
+        m = L.marker(ll, { icon: makeEmojiIcon(stop.emoji) }).addTo(map);
+        st.markersByStop[i] = m;
+      } else {
+        m.setLatLng(ll);
+        m.setIcon(makeEmojiIcon(stop.emoji));
+      }
+
+      m.bindPopup(`
+        <div style="font-size:13px;line-height:1.35;">
+          <b>${stop.emoji || '📍'} ${i+1}. ${stop.name}</b><br/>
+          <span style="color:#5c5f66;">${stop.time}</span><br/>
+          <span style="font-size:11px;color:#5c5f66;">${g.display}</span>
+        </div>
+      `);
+
+      setStatus(i, "✅ 인식 완료");
+      updateLineForDay(dayIdx);
+    }
+
+    async function geocodeAll(dayIdx) {
+      for (let i=0; i<days[dayIdx].stops.length; i++) {
+        await upsertMarker(dayIdx, i);
+        await new Promise(r => setTimeout(r, 220));
+      }
+    }
+
+    function renderTabs() {
+      tabsEl.innerHTML = "";
+      days.forEach((d, idx) => {
+        const btn = document.createElement("button");
+        btn.className = "tab" + (idx === currentDayIdx ? " active" : "");
+        btn.textContent = d.label;
+        btn.addEventListener("click", async () => {
+          if (idx === currentDayIdx) return;
+          // clear current markers
+          clearMapForDay(currentDayIdx);
+          currentDayIdx = idx;
+          renderTabs();
+          renderDay();
+          await geocodeAll(currentDayIdx);
+        });
+        tabsEl.appendChild(btn);
+      });
+    }
+
+    function renderDay() {
+      const d = days[currentDayIdx];
+      subtitleEl.textContent = `${d.label} 스팟 목록 (Query 수정 가능)`;
+      routeHintEl.innerHTML = `동선 힌트: <b>${d.route_hint}</b>`;
+      listEl.innerHTML = "";
+
+      d.stops.forEach((s, idx) => {
+        const div = document.createElement("div");
+        div.className = "item";
+        div.dataset.idx = idx;
+
+        const safe = (s.query || "").replace(/"/g, '&quot;');
+
+        div.innerHTML = `
+          <div class="time"><span class="emoji">${s.emoji || '📍'}</span><span>${s.time}</span></div>
+          <div>
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;"><div class="name">${idx+1}. ${s.name}</div><button class="btn danger mini" id="del-${idx}" onclick="event.stopPropagation()">삭제</button></div>
+            <div class="queryRow" onclick="event.stopPropagation()">
+              <input class="qInput" id="q-${idx}" value="${safe}" />
+              <button class="btn primary" id="apply-${idx}">적용</button>
+            </div>
+            <div class="status" id="status-${idx}">자동 인식 중…</div>
+          </div>
+        `;
+        listEl.appendChild(div);
+      });
+
+      // card click => fly to marker
+      document.querySelectorAll(".item").forEach(el => {
+        el.addEventListener("click", () => {
+          const idx = parseInt(el.dataset.idx, 10);
+          const m = state[currentDayIdx].markersByStop[idx];
+          if (!m) return;
+          map.flyTo(m.getLatLng(), 15, { duration: 0.8 });
+          m.openPopup();
+        });
+      });
+
+      
+      // delete buttons
+      days[currentDayIdx].stops.forEach((s, i) => {
+        const del = document.getElementById(`del-${i}`);
+        if (!del) return;
+        del.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          removeStopForCurrentDay(i);
+        });
+      });
+
+// apply buttons
+      
+      // add-stop button
+      const addBtn = document.getElementById("addStopBtn");
+      if (addBtn) {
+        addBtn.onclick = () => addStopForCurrentDay();
+      }
+
+days[currentDayIdx].stops.forEach((s, i) => {
+        const btn = document.getElementById(`apply-${i}`);
+        const input = document.getElementById(`q-${i}`);
+        if (!btn || !input) return;
+
+        const apply = async () => {
+          const v = input.value.trim();
+          if (!v) return;
+          days[currentDayIdx].stops[i].query = v;
+          await upsertMarker(currentDayIdx, i);
+        };
+
+        btn.addEventListener("click", apply);
+        input.addEventListener("keydown", (ev) => {
+          if (ev.key === "Enter") apply();
+        });
+      });
+    }
+
+    
+    function ensureStateForDay(dayIdx) {
+      // sync state arrays with current stops length
+      const d = days[dayIdx];
+      const st = state[dayIdx];
+      const n = d.stops.length;
+      if (st.markersByStop.length !== n) {
+        // keep existing markers/coords, extend with nulls if needed
+        const newMarkers = new Array(n).fill(null);
+        const newCoords = new Array(n).fill(null);
+        for (let i=0; i<Math.min(n, st.markersByStop.length); i++) {
+          newMarkers[i] = st.markersByStop[i];
+          newCoords[i] = st.coordsByStop[i];
+        }
+        st.markersByStop = newMarkers;
+        st.coordsByStop = newCoords;
+      }
+    }
+
+    function addStopForCurrentDay() {
+      const d = days[currentDayIdx];
+      d.stops.push({
+        time: "—",
+        emoji: "📍",
+        name: "새 스팟",
+        query: "Shanghai"
+      });
+      ensureStateForDay(currentDayIdx);
+      renderDay();
+      const newIdx = d.stops.length - 1;
+      upsertMarker(currentDayIdx, newIdx);
+      listEl.scrollTop = listEl.scrollHeight;
+    }
+    function removeStopForCurrentDay(idx) {
+      const d = days[currentDayIdx];
+      if (idx < 0 || idx >= d.stops.length) return;
+
+      // remove marker if exists
+      const st = state[currentDayIdx];
+      const m = st.markersByStop[idx];
+      if (m) {
+        m.remove();
+      }
+
+      // splice data
+      d.stops.splice(idx, 1);
+
+      // clear and rebuild state for this day (indices changed)
+      clearMapForDay(currentDayIdx);
+      ensureStateForDay(currentDayIdx);
+
+      // re-render + re-geocode everything to redraw markers/line with new numbering
+      renderDay();
+      geocodeAll(currentDayIdx);
+    }
+
+
+
+(async () => {
+      renderTabs();
+      renderDay();
+      await geocodeAll(currentDayIdx);
+    })();
+  </script>
+
+</body>
+</html>
