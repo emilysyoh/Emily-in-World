@@ -1,724 +1,1801 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Emily, Amy in SHANGHAI</title>
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-    crossorigin=""
-  />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>{name}-in-World</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Paytone+One&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@700&display=swap" rel="stylesheet">
+
+  <!-- Cute fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+
+
+  <!-- Leaflet (map) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
   <style>
-    :root {
-      --bg: #ffffff;
-      --panel: #fff7fb;
-      --panel2: #ffffff;
-      --muted: #5c5f66;
-      --text: #1f2328;
-      --line: rgba(31,35,40,0.12);
-      --accent: #ff6fae;
-      --accent2: #2b2f36;
-    }
-    html, body {
-      height: 100%;
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", Arial;
-    }
-    .wrap {
-      height: 100%;
-      display: flex;
-      gap: 12px;
-      padding: 12px;
-      box-sizing: border-box;
-    }
-    .left {
-      width: min(580px, 48vw);
-      min-width: 360px;
-      background: var(--panel2);
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-    }
-    .header {
-      padding: 14px 16px 10px;
-      border-bottom: 1px solid var(--line);
-      background: linear-gradient(180deg, var(--panel), var(--panel2));
-    }
-    .toprow {
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-    }
-    .header h1 {
-      font-size: 15px;
-      margin: 0 0 6px;
-      letter-spacing: 0.2px;
-    }
-    .sub {
-      font-size: 12px;
-      color: var(--muted);
-      line-height: 1.5;
-    }
-    .tabs {
-      display:flex; gap:8px; flex-wrap:wrap;
-    }
-    .tab {
-      border: 1px solid var(--line);
-      background: #ffffff;
-      border-radius: 999px;
-      padding: 7px 10px;
-      font-size: 12px;
-      font-weight: 750;
-      cursor: pointer;
-      color: var(--accent2);
-    }
-    .tab.active {
-      border-color: rgba(255,111,174,0.45);
-      background: rgba(255,111,174,0.14);
+
+    html, body, input, button, textarea, select { 
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", Arial, sans-serif;
+      font-weight: 500;
     }
 
-    .list {
-      overflow: auto;
-      padding: 12px;
-      background: var(--panel2);
+    :root{
+      --ink:#111827;
+      --muted:#6b7280;
+      --line:#e5e7eb;
+      --shadow: 0 8px 22px rgba(17,24,39,.10);
+
+      /* Home theme */
+      --homeBg:#f3f4f6;         /* light gray */
+      --homeAccent:#fff2b3;     /* pale yellow */
+      --homeAccentStrong:#ffe08a;
+      --homeCard:#ffffff;
+      --homeControl:#ffffff;
+
+      /* Detail theme */
+      --detailBg:#f3f4f6;       /* light gray */
+      --detailAccent:#e5e7eb;   /* will be overridden per trip */
+      --detailControl: color-mix(in srgb, var(--detailAccent) 18%, #ffffff 82%);
+
+      /* Common */
+      --card:#ffffff;
+      --radius:18px;
+      --emojiBg:#e5e7eb; /* opaque light gray */
     }
-    .item {
-      display: grid;
-      grid-template-columns: 64px 1fr;
-      gap: 10px;
-      padding: 12px;
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      margin-bottom: 12px;
-      background: var(--panel);
-      cursor: pointer;
-      box-shadow: 0 6px 16px rgba(31,35,40,0.06);
-      transition: transform .08s ease, box-shadow .08s ease;
+    *{box-sizing:border-box}
+    body{margin:0;font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", Arial, sans-serif;color:var(--ink);background: var(--homeBg);}
+    body.home-mode{background: var(--homeBg);}
+    body.detail-mode{background: var(--detailBg);}
+    .app{max-width: 100%;margin:0 auto;padding:28px 20px 40px;}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;}
+    .brand{font-size:40px;font-weight:600;letter-spacing:-0.02em;}
+    .actions{display:flex;gap:10px;align-items:center;}
+    .btn{border:1px solid var(--line);background:var(--homeControl);padding:12px 14px;border-radius:14px;font-weight:600;cursor:pointer;box-shadow:none;}
+    .btn.primary{background:var(--homeAccentStrong);color:var(--ink);border-color:rgba(0,0,0,.06);} body.detail-mode .btn.primary{background:var(--detailAccent);color:var(--ink);}
+    body.detail-mode .btn.primary{background:var(--homeAccentStrong);color:var(--ink);border-color:rgba(0,0,0,.06);} body.detail-mode .btn.primary{background:var(--detailAccent);color:var(--ink);}
+    .btn.ghost{background:transparent;box-shadow:none;}
+    .btn.small{padding:10px 12px;border-radius:12px;font-weight:600;}
+    .seg{display:flex;background:var(--homeAccent);border:1px solid var(--line);border-radius:999px;padding:4px;gap:4px;}
+    .seg button{border:0;background:transparent;padding:10px 14px;border-radius:999px;font-weight:600;cursor:pointer;color:var(--muted);}
+    .seg button.active{background:var(--card);color:var(--ink);box-shadow:0 6px 18px rgba(17,24,39,.06);}
+
+    .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:18px;}
+    @media (max-width:980px){.grid{grid-template-columns:repeat(2,minmax(0,1fr));}.brand{font-size:34px;}}
+    @media (max-width:640px){.grid{grid-template-columns:1fr;}.brand{font-size:30px;}.app{padding:18px 14px 28px;}}
+    .tripCard{border:1px solid var(--line);border-radius:22px;padding:18px;background:var(--homeCard);box-shadow:none;cursor:pointer;position:relative;overflow:hidden;min-height:150px;}
+    .tripCard::before{content:"";position:absolute;inset:0;background:var(--accent,#f5f5f5);opacity:.22;pointer-events:none;}
+    .tripTitle{position:relative;font-size:22px;font-weight:700;letter-spacing:-0.02em;margin:0 0 10px 0;line-height:1.15;}
+    .tripMeta{position:relative;color:var(--muted);font-weight:700;font-size:14px;}
+    .tripDates{margin-top:8px;font-weight:700;color:var(--ink);letter-spacing:0.01em;}
+    .tripPlus{display:flex;align-items:center;justify-content:center;font-size:44px;font-weight:700;background:transparent;border:2px dashed var(--line);box-shadow:none;}
+
+    .calendarBar{display:flex;align-items:center;justify-content:space-between;margin-top:8px;gap:10px;}
+    .yearBtn{border:1px solid var(--line);background:var(--homeAccent);padding:12px 16px;border-radius:16px;font-weight:700;cursor:pointer;box-shadow:none;min-width:150px;text-align:center;}
+    .months{margin-top:14px;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;}
+    @media (max-width:980px){.months{grid-template-columns:repeat(3,minmax(0,1fr));}}
+    @media (max-width:640px){.months{grid-template-columns:repeat(2,minmax(0,1fr));}}
+    .monthCell{border:1px solid var(--line);border-radius:18px;background:var(--homeCard);box-shadow:none;overflow:hidden;min-height:260px;display:flex;flex-direction:column;}
+    .monthHead{padding:10px 12px;font-weight:600;border-bottom:1px solid var(--line);background:var(--homeControl);}
+    .monthBody{padding:10px 0 12px;display:flex;flex-direction:column;gap:10px;}
+    .tripBar{border-radius:0;padding:10px 12px;font-weight:700;cursor:pointer;border:0;background:var(--accent,#eaeaea);color:var(--ink);display:flex;align-items:center;justify-content:center;height:44px;}
+
+    .detailWrap{border:1px solid var(--line);border-radius:24px;background:var(--card);box-shadow:none;overflow:hidden;}
+    .detailTop{padding:16px 16px 12px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;justify-content:space-between;gap:12px;background:var(--detailControl);}
+    .detailTop h2{margin:0;font-size:26px;font-weight:950;letter-spacing:-0.02em;}
+    .detailTop .meta{margin-top:6px;color:var(--muted);font-weight:600;font-size:14px;}
+    .dayTabs{display:flex;gap:8px;padding:12px 12px 0;flex-wrap:wrap;}
+    .tab{border:1px solid var(--line);background:var(--detailControl);padding:10px 12px;border-radius:999px;font-weight:700;cursor:pointer;color:var(--muted);}
+    .tab.active{background:var(--detailAccent);color:var(--ink);}
+    .content{display:grid;grid-template-columns:420px 1fr;gap:0;min-height:520px;}
+    @media (max-width:980px){.content{grid-template-columns:1fr;min-height:auto;}}
+    .left{border-right:1px solid var(--line);padding:12px;background:transparent;}
+    @media (max-width:980px){.left{border-right:1px solid var(--line);padding:12px;background:transparent;}}
+    .right{position:relative;min-height:520px;}
+    #map{position:absolute;inset:0;}
+
+    .stop{border:1px solid var(--line);border-radius:18px;background:var(--card);box-shadow:0 6px 18px rgba(17,24,39,.05);padding:12px;margin-bottom:10px;}
+    .stopRow{display:grid;grid-template-columns:92px 60px 1fr 44px;gap:8px;align-items:center;}
+    .stopRow input,.qrow input{width:100%;border:1px solid var(--line);background:var(--homeControl);border-radius:12px;padding:10px 10px;font-weight:600;outline:none;} body.detail-mode .stopRow input, body.detail-mode .qrow input{background:var(--detailControl);} 
+    .stopRow input:focus,.qrow input:focus{border-color:rgba(15,94,122,.45);box-shadow:0 0 0 4px rgba(15,94,122,.12);}
+    .kill{border:1px solid var(--line);background:#fff;border-radius:12px;width:42px;height:42px;cursor:pointer;font-weight:700;color:#ef4444;}
+    .qrow{display:grid;grid-template-columns:1fr;margin-top:8px;gap:8px;}
+    .hint{color:var(--muted);font-weight:700;font-size:12px;line-height:1.35;margin:8px 2px 0;}
+    
+    
+    .stop{border:1px solid var(--line);border-radius:18px;background:var(--card);box-shadow:none;padding:14px;margin-bottom:12px;}
+    body.detail-mode .stop{background:var(--card);}
+    .stopRow{display:grid;grid-template-columns:110px 90px 1fr 44px;gap:10px;align-items:center;}
+    .qrow{display:grid;grid-template-columns:1fr 44px;gap:10px;align-items:center;margin-top:10px;}
+    .iconBtn{width:44px;height:44px;border-radius:14px;border:1px solid var(--line);background:var(--homeControl);cursor:pointer;font-weight:700;display:flex;align-items:center;justify-content:center;}
+    body.detail-mode .iconBtn{background:var(--detailControl);}
+    .iconBtn.delete{color:#b91c1c;border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.10);}
+    .iconBtn.delete:hover{background:rgba(239,68,68,.14);}
+    .iconBtn.check{color:#047857;border-color:rgba(16,185,129,.35);background:rgba(16,185,129,.12);}
+    .iconBtn.check:hover{background:rgba(16,185,129,.18);}
+
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;padding:18px;z-index:9999;}
+    .overlay.show{display:flex;}
+    .modal{width:min(640px,100%);background:var(--card);border-radius:22px;border:1px solid var(--line);box-shadow:0 18px 50px rgba(0,0,0,.22);overflow:hidden;}
+    .modalHead{padding:14px 16px;background:var(--homeAccent);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px;}
+    .modalHead h3{margin:0;font-size:16px;font-weight:950;}
+    .modalBody{padding:16px;display:grid;gap:12px;}
+    .field{display:grid;gap:6px;}
+    .field label{font-weight:700;color:var(--muted);font-size:12px;}
+    .field input,.field select{border:1px solid var(--line);border-radius:14px;padding:12px 12px;font-weight:850;outline:none;}
+    .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    @media (max-width:640px){.row2{grid-template-columns:1fr;}}
+    .tog{display:flex;gap:10px;align-items:center;}
+    .chip{border:1px solid var(--line);background:var(--pill);padding:10px 12px;border-radius:999px;font-weight:700;cursor:pointer;color:var(--muted);user-select:none;}
+    .chip.active{background:var(--pink2);color:var(--ink);}
+    .modalFoot{padding:14px 16px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end;background:#fff;}
+    .danger{color:#ef4444;border-color:rgba(239,68,68,.35);}
+
+    .emojiBadge{width:34px;height:34px;border-radius:999px;background:var(--emojiBg);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 6px 14px rgba(17,24,39,.08);border:1px solid rgba(0,0,0,.08);}
+  
+    /* Spot card UI (ref: pink card + delete pill + query pill + status + check) */
+    .stop{border:1px solid rgba(236,72,153,.18);border-radius:22px;background:#fff3f6;padding:18px 18px 14px;box-shadow:none;margin-bottom:14px;}
+    body.detail-mode .stop{background:#fff3f6;}
+    .spotHeader{display:grid;grid-template-columns:34px 86px 1fr auto;gap:12px;align-items:center;}
+    .spotEmojiWrap{width:34px;height:34px;border-radius:12px;background:#ffffff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;}
+    .spotEmojiWrap input{border:0;background:transparent;width:100%;text-align:center;outline:none;font-weight:700;font-size:18px;font-family:inherit;}
+    .spotTime input,.spotName input{border:0;background:transparent;font-weight:700;font-size:15px;outline:none;padding:0;margin:0;width:100%;font-family:inherit;}
+    .deletePill{border:1px solid rgba(236,72,153,.30);background:#ffffff;color:#be185d;border-radius:14px;padding:8px 14px;font-weight:700;cursor:pointer;font-family:inherit;}
+    .deletePill:hover{background:#fff;}
+    .spotQuery{margin-top:12px;}
+    .spotQuery input{width:100%;border:1px solid rgba(0,0,0,.08);background:#ffffff;border-radius:999px;padding:12px 14px;font-weight:700;outline:none;font-family:inherit;}
+    .spotMeta{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:10px;}
+    .metaLeft{display:flex;align-items:center;gap:8px;color:#065f46;font-weight:600;}
+    .tick{width:16px;height:16px;border-radius:4px;background:rgba(16,185,129,.18);border:1px solid rgba(16,185,129,.35);display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1;color:#047857;}
+    .tick.wait{background:rgba(107,114,128,.12);border-color:rgba(107,114,128,.25);color:#374151;}
+    .tick.err{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.35);color:#b91c1c;}
+    .metaRight{display:flex;align-items:center;gap:10px;}
+    .enterHint{color:var(--muted);font-weight:600;}
+    .checkBtn{width:38px;height:38px;border-radius:14px;border:1px solid rgba(16,185,129,.35);background:rgba(16,185,129,.12);cursor:pointer;font-weight:700;color:#047857;display:flex;align-items:center;justify-content:center;font-family:inherit;}
+    .checkBtn:hover{background:rgba(16,185,129,.18);}
+
+
+    /* Spot card v2 (matches wireframe) */
+    .stop{
+      border:1px solid rgba(0,0,0,.12);
+      border-radius:22px;
+      background: var(--detailAccent);
+      padding:16px;
+      box-shadow:none;
+      margin-bottom:14px;
     }
-    .item:hover { box-shadow: 0 10px 22px rgba(31,35,40,0.08); }
-    .item:active { transform: scale(0.99); }
-    .time {
-      font-weight: 800;
-      font-size: 12px;
-      color: var(--accent2);
-      align-self: start;
-      padding-top: 2px;
-      display:flex;
-      gap:6px;
+    .spotHeader{
+      display:grid;
+      grid-template-columns: 90px 90px 1fr 54px;
+      gap:12px;
       align-items:center;
     }
-    .time .emoji {
-      font-size: 14px;
-      line-height: 1;
+    .boxPh{
+      border:2px dashed rgba(0,0,0,.12);
+      background:rgba(255,255,255,.25);
+      border-radius:14px;
+      padding:12px 12px;
+      font-weight:600;
+      color:rgba(17,24,39,.85);
+      text-align:center;
     }
-    .name {
-      font-size: 13px;
-      line-height: 1.35;
-      font-weight: 650;
+    .spotNameWrap{
+      position:relative;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      border:1px solid rgba(0,0,0,.10);
+      background: rgba(255,255,255,.75);
+      border-radius:14px;
+      padding:10px 12px;
     }
-    .queryRow {
-      margin-top: 8px;
-      display: flex;
-      gap: 8px;
-      align-items: center;
+    .spotNum{
+      font-weight:600;
+      color:rgba(17,24,39,.70);
+      min-width:28px;
+      text-align:right;
     }
-    .qInput {
-      flex: 1;
-      font-size: 11.5px;
-      color: var(--text);
-      background: #ffffff;
-      border: 1px solid var(--line);
-      padding: 8px 10px;
-      border-radius: 12px;
-      outline: none;
+    .spotNameWrap input{
+      border:0;
+      background:transparent;
+      outline:none;
+      width:100%;
+      font-weight:500;
+      font-size:15px;
     }
-    .btn {
-      font-size: 11.5px;
-      font-weight: 750;
-      padding: 8px 10px;
-      border-radius: 12px;
-      border: 1px solid var(--line);
-      background: #ffffff;
-      color: var(--accent2);
-      cursor: pointer;
-      white-space: nowrap;
+    .iconBtnX{
+      width:54px;height:54px;
+      border-radius:14px;
+      border:1px solid rgba(0,0,0,.12);
+      background: rgba(255,255,255,.70);
+      cursor:pointer;
+      font-weight:600;
+      color:#b45309;
+      display:flex;align-items:center;justify-content:center;
     }
-    .btn.primary {
-      border-color: rgba(255,111,174,0.35);
-      background: rgba(255,111,174,0.12);
-      color: var(--accent2);
+    .iconBtnX:hover{background: rgba(255,255,255,.86);}
+    .qRow{
+      margin-top:12px;
+      display:grid;
+      grid-template-columns: 1fr 54px;
+      gap:12px;
+      align-items:center;
+    }
+    .qRow input{
+      border:1px solid rgba(0,0,0,.10);
+      background: rgba(255,255,255,.80);
+      border-radius:14px;
+      padding:12px 14px;
+      outline:none;
+      font-weight:500;
+    }
+    .iconBtnCheck{
+      width:54px;height:54px;
+      border-radius:14px;
+      border:1px solid rgba(0,0,0,.12);
+      background: rgba(255,255,255,.70);
+      cursor:pointer;
+      font-weight:700;
+      color:#047857;
+      display:flex;align-items:center;justify-content:center;
+    }
+    .iconBtnCheck:hover{background: rgba(255,255,255,.86);}
+    .spotFoot{
+      margin-top:10px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+    }
+    .statusLine{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-weight:500;
+      color:rgba(17,24,39,.75);
+    }
+    .statusDot{
+      width:14px;height:14px;border-radius:4px;
+      border:1px solid rgba(0,0,0,.14);
+      background: rgba(255,255,255,.75);
+      display:flex;align-items:center;justify-content:center;
+      font-size:11px;line-height:1;
+      color:#047857;
+    }
+    .hintRight{
+      font-weight:600;
+      color:rgba(17,24,39,.65);
     }
 
-    .btn.danger {
-      border-color: rgba(180,35,90,0.25);
-      background: rgba(180,35,90,0.10);
-      color: #b4235a;
+
+    /* ===== Compact clean style (smaller type, smaller boxes, less bold) ===== */
+    :root{
+      --fs-xxs:10px;
+      --fs-xs:11px;
+      --fs-sm:12px;
+      --fs-md:14px;
+      --fs-lg:16px;
     }
-    .btn.mini {
-      padding: 6px 8px;
-      border-radius: 10px;
-      font-size: 11px;
-      font-weight: 800;
-    }
-    .status {
-      margin-top: 6px;
-      font-size: 11px;
-      color: var(--muted);
-    }
-    .status.warn {
-      color: #b4235a;
-      font-weight: 650;
-    }
-    .hint {
-      padding: 12px 16px 16px;
-      border-top: 1px solid var(--line);
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.55;
-      background: var(--panel2);
+    body{font-size:var(--fs-sm); line-height:1.28;}
+    h1,h2,h3{letter-spacing:-.2px;}
+    .appTitle{font-size:var(--fs-lg) !important; font-weight:600 !important;}
+    .subTitle{font-size:var(--fs-xs) !important; font-weight:500 !important; color:var(--muted) !important;}
+
+    /* Buttons */
+    .btn{padding:9px 11px !important; border-radius:12px !important; font-weight:600 !important; font-size:var(--fs-xs) !important;}
+    .btn.primary{font-weight:650 !important;}
+    .btn.ghost{font-weight:600 !important;}
+    .seg{padding:3px !important; gap:3px !important;}
+    .seg button{padding:7px 10px !important; font-size:var(--fs-xs) !important; font-weight:600 !important;}
+
+    /* Trip cards (home) */
+    .tripCard{padding:14px !important; min-height:130px !important; border-radius:18px !important;}
+    .tripCard h3{font-size:var(--fs-md) !important; font-weight:650 !important; margin:0 0 6px 0 !important;}
+    .tripCard .meta{font-size:var(--fs-xs) !important; font-weight:500 !important;}
+
+    /* Calendar */
+    .monthCell{min-height:220px !important; border-radius:16px !important;}
+    .monthHead{padding:8px 10px !important; font-size:var(--fs-xs) !important; font-weight:650 !important;}
+    .tripBar{height:36px !important; font-size:var(--fs-xs) !important; font-weight:650 !important;}
+
+    /* Detail header & tabs */
+    .detailTop{padding:12px 12px 10px !important;}
+    .detailTop h2{font-size:var(--fs-lg) !important; font-weight:650 !important; margin:0 !important;}
+    .detailTop .muted{font-size:var(--fs-xs) !important; font-weight:500 !important;}
+    .tabs{gap:8px !important;}
+    .tab{padding:8px 10px !important; font-size:var(--fs-xs) !important; font-weight:600 !important;}
+    .tab.active{font-weight:650 !important;}
+
+    /* Panels spacing */
+    .left{padding:10px !important;}
+    .right{padding:10px !important;}
+    .card{border-radius:18px !important;}
+
+    /* Spot card (query box) */
+    .stop{border-radius:18px !important; padding:12px !important; margin-bottom:10px !important;}
+    .spotHeader{grid-template-columns:72px 72px 1fr 44px !important; gap:10px !important;}
+    .boxPh{padding:9px 10px !important; border-radius:12px !important; font-size:var(--fs-xs) !important; font-weight:600 !important;}
+    .spotNameWrap{padding:8px 10px !important; border-radius:12px !important;}
+    .spotNum{font-size:var(--fs-xs) !important; font-weight:600 !important; min-width:24px !important;}
+    .spotNameWrap input{font-size:var(--fs-sm) !important; font-weight:500 !important;}
+    .iconBtnX{width:44px !important; height:44px !important; border-radius:12px !important; font-size:var(--fs-xs) !important; font-weight:650 !important;}
+    .qRow{margin-top:10px !important; grid-template-columns:1fr 44px !important; gap:10px !important;}
+    .qRow input{padding:10px 12px !important; border-radius:12px !important; font-size:var(--fs-sm) !important; font-weight:500 !important;}
+    .iconBtnCheck{width:44px !important; height:44px !important; border-radius:12px !important; font-size:var(--fs-xs) !important; font-weight:700 !important;}
+    .spotFoot{margin-top:8px !important;}
+    .statusLine{font-size:var(--fs-xs) !important; font-weight:500 !important;}
+    .statusDot{width:12px !important; height:12px !important; font-size:10px !important;}
+    .hintRight{font-size:var(--fs-xs) !important; font-weight:600 !important;}
+
+    /* Add spot button at bottom */
+    .addStopBtn{padding:10px 12px !important; border-radius:14px !important; font-size:var(--fs-xs) !important; font-weight:650 !important;}
+    .helperText{font-size:var(--fs-xxs) !important; font-weight:500 !important;}
+
+    /* Leaflet controls */
+    .leaflet-control-zoom a{width:28px !important; height:28px !important; line-height:28px !important; font-size:16px !important;}
+    .routeHint{font-size:var(--fs-xxs) !important; font-weight:600 !important; padding:6px 8px !important; border-radius:10px !important;}
+
+
+    /* v7 tweaks */
+    .container, .shell, .wrap, .appWrap { max-width:100% !important; width:100% !important; }
+    .card, .panel, .panelWrap { box-shadow:none !important; }
+    .main { max-width:100% !important; }
+
+
+    /* Ensure spot card background follows trip theme */
+    body.detail-mode .stop{ background: var(--detailAccent) !important; }
+    .stop{ background: var(--detailAccent) !important; }
+
+
+    .boxPh{
+      border:0 !important;
+      background:transparent !important;
+      padding:0 !important;
+      border-radius:0 !important;
+      font-weight:600 !important;
+      color:rgba(17,24,39,.80) !important;
+      text-align:left !important;
     }
 
-    .right {
-      flex: 1;
-      background: var(--panel2);
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      overflow: hidden;
-      position: relative;
-      box-shadow: 0 10px 24px rgba(31,35,40,0.08);
+
+    .spotHeader{grid-template-columns:60px 60px 1fr 40px !important; gap:8px !important;}
+    .iconBtnX{width:40px !important;height:40px !important;border-radius:10px !important;}
+    .qRow{grid-template-columns:1fr 40px !important; gap:8px !important;}
+    .iconBtnCheck{width:40px !important;height:40px !important;border-radius:10px !important;}
+    .stop{border-radius:16px !important; padding:10px !important; margin-bottom:8px !important;}
+    .spotNameWrap{padding:7px 9px !important;border-radius:10px !important;}
+    .qRow input{padding:9px 10px !important;border-radius:10px !important;}
+
+
+    .tab{padding:7px 9px !important; font-size:var(--fs-xs) !important;}
+    .detailTop h2{font-size:var(--fs-lg) !important;}
+
+
+
+/* ===== v10: global clean (no shadows, minimal bold) ===== */
+*{ box-shadow:none !important; }
+.leaflet-popup-content-wrapper,.leaflet-popup-tip{ box-shadow:none !important; }
+html,body,input,button,textarea,select{ font-weight:400 !important; }
+b,strong{ font-weight:400 !important; }
+
+/* Titles only */
+.appTitle,.homeTitle,.detailTop h2{
+  font-family:"Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", Arial, sans-serif !important;
+  font-weight:700 !important;
+}
+
+/* Calendar: connected table */
+.calendarGrid{
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:0 !important;
+  border:1px solid rgba(0,0,0,.18);
+  border-radius:0 !important;
+  overflow:hidden;
+  background:#fff;
+}
+.monthCell{
+  border-radius:0 !important;
+  border-right:1px solid rgba(0,0,0,.18);
+  border-bottom:1px solid rgba(0,0,0,.18);
+  background:#fff;
+  min-height:240px;
+}
+.monthCell:nth-child(6n){ border-right:0; }
+.monthCell:nth-last-child(-n+6){ border-bottom:0; }
+.monthHead{ background:#fff; border-bottom:1px solid rgba(0,0,0,.10); font-weight:400 !important; }
+
+/* Stops use trip accent */
+.stop{ background: var(--detailControl) !important; border:1px solid rgba(0,0,0,.10) !important; }
+.stop .qRow input{ background:#fff !important; }
+
+/* Emoji/time minimalist */
+.spotHeader{ display:grid !important; grid-template-columns: 26px 52px 1fr 32px !important; align-items:center !important; gap:8px !important; }
+.emojiBtn{ border:0; background:transparent; padding:0; cursor:pointer; font-size:16px; line-height:1; }
+.timeWrap{ display:flex; align-items:center; gap:6px; }
+.timeWrap input{ width:24px; border:0; outline:none; background:transparent; padding:0; text-align:center; font-size:12px; color:rgba(17,24,39,.75); }
+.timeWrap .colon{ color:rgba(17,24,39,.55); font-size:12px; }
+.emojiPop{
+  position:absolute; top:22px; left:0;
+  display:none;
+  grid-template-columns: repeat(8, 24px);
+  gap:6px;
+  padding:10px;
+  border:1px solid rgba(0,0,0,.14);
+  background:#fff;
+  border-radius:12px;
+  z-index:9999;
+}
+.emojiPop.open{ display:grid; }
+.emojiOpt{
+  width:24px;height:24px;
+  border-radius:8px;
+  border:1px solid rgba(0,0,0,.08);
+  background:#fff;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;
+  font-size:15px;
+}
+.emojiOpt:hover{ background:rgba(0,0,0,.04); }
+
+/* Compact text sizes (even smaller) */
+.detailTop h2{ font-size:16px !important; }
+.meta{ font-size:11px !important; }
+.tab{ font-size:11px !important; padding:6px 10px !important; }
+.stop{ padding:10px 12px !important; }
+.qRow input{ font-size:12px !important; height:30px !important; }
+.iconBtnX,.iconBtnCheck{ width:30px !important; height:30px !important; font-size:12px !important; }
+.statusLine,.hintRight{ font-size:11px !important; }
+
+    /* ===== v11 home theme: white bg, light-gray accent ===== */
+    body{ background:#ffffff !important; }
+    body.home-mode{
+      --homeBg: #ffffff;
+      --homeAccent: #e5e7eb; /* light gray */
+      --homeAccent2: #f3f4f6;
+      background: var(--homeBg) !important;
     }
-    #map { height: 100%; width: 100%; }
-    .badge {
-      position: absolute;
-      top: 12px;
-      left: 12px;
-      z-index: 999;
-      background: rgba(255, 247, 251, 0.92);
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 8px 12px;
-      font-size: 12px;
-      color: var(--accent2);
-      backdrop-filter: blur(6px);
-      max-width: calc(100% - 24px);
+    body.home-mode .topBar,
+    body.home-mode .seg{
+      background: rgba(229,231,235,.55) !important;
+      border-color: rgba(0,0,0,.10) !important;
     }
-    .badge b { color: var(--accent); }
-  
-    /* Hide apply buttons (Enter still applies) */
-    button[id^="apply-"] { display: none !important; }
-  </style>
+    body.home-mode .btn.primary{
+      background: var(--homeAccent) !important;
+      color: rgba(17,24,39,.85) !important;
+      border-color: rgba(0,0,0,.12) !important;
+    }
+    body.home-mode .btn.primary:hover{ background: #d1d5db !important; }
+
+
+    /* ===== v11 home cards: wider & centered ===== */
+    .tripGrid{
+      display:flex !important;
+      flex-wrap:wrap !important;
+      gap:18px !important;
+      justify-content:center !important;
+      align-items:stretch !important;
+    }
+    .tripCard{
+      width: 340px !important;
+      max-width: 340px !important;
+      min-height: 180px !important;
+      border-radius: 28px !important;
+    }
+
+
+    /* ===== v11 calendar ribbon: full width & bold title ===== */
+    .tripBar{
+      width:100% !important;
+      display:flex !important;
+      align-items:center !important;
+      justify-content:center !important;
+      font-weight:700 !important;
+      letter-spacing:-.2px;
+    }
+
+
+    /* ===== v11 year select modal ===== */
+    .modalOverlay{
+      position:fixed; inset:0; background:rgba(0,0,0,.35);
+      display:none; align-items:center; justify-content:center;
+      z-index:10000;
+    }
+    .modalCard{
+      width: 340px;
+      border:1px solid rgba(0,0,0,.12);
+      border-radius:18px;
+      background:#fff;
+      padding:14px;
+    }
+    .modalHead{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+    .modalTitle{ font-weight:700; letter-spacing:-.2px; }
+    .modalClose{ border:0; background:transparent; cursor:pointer; font-size:16px; }
+    .yearGrid{
+      display:grid; grid-template-columns:repeat(4, 1fr); gap:8px;
+    }
+    .yearBtn{
+      border:1px solid rgba(0,0,0,.12);
+      background:#fff;
+      border-radius:12px;
+      padding:10px 0;
+      cursor:pointer;
+      font-weight:600;
+      font-size:12px;
+    }
+    .yearBtn:hover{ background:rgba(0,0,0,.04); }
+    .yearBtn.active{ background:rgba(229,231,235,.75); }
+
+
+    /* ===== v11 detail: more opaque spot background ===== */
+    .stop{
+      background: color-mix(in srgb, var(--detailAccent) 85%, white 15%) !important;
+    }
+
+
+    /* ===== v11 time width reduce ===== */
+    .spotHeader{ grid-template-columns: 34px 52px 1fr 40px !important; }
+    .timeWrap input{ width:22px !important; }
+    .timeWrap{ gap:4px !important; }
+
+
+    /* ===== v12 home cards: vertical/tall, text centered ===== */
+    .tripGrid{
+      justify-content:flex-start !important;
+    }
+    .tripCard{
+      width: 220px !important;
+      max-width: 220px !important;
+      min-height: 240px !important;
+      padding: 18px !important;
+      border-radius: 28px !important;
+      display:flex !important;
+      flex-direction:column !important;
+      justify-content:flex-start !important;
+    }
+    .tripCard h3, .tripCard .meta{ text-align:center !important; }
+    .tripCard h3{ margin-top:4px !important; }
+
+
+    /* ===== v12 detail: lighter spot background (more transparent look) ===== */
+    .stop{
+      background: color-mix(in srgb, var(--detailAccent) 35%, white 65%) !important;
+      border-color: rgba(0,0,0,.10) !important;
+    }
+
+
+    /* ===== v13 home cards: left aligned list, centered text inside ===== */
+    .tripGrid{
+      justify-content:flex-start !important;
+    }
+    .tripCard{ text-align:center !important; }
+    .tripCard h3{
+      color: var(--tripTextStrong, rgba(17,24,39,.92)) !important;
+      font-weight:700 !important; /* keep title emphasis */
+    }
+    .tripCard .meta, .tripCard .meta *{
+      color: rgba(55,65,81,.92) !important; /* dark gray */
+      font-size: inherit !important;
+      font-weight:400 !important;
+    }
+
+
+    .tripCard h3{ color: var(--titleColor, rgba(17,24,39,.92)) !important; }
+
+
+    /* ===== v13 detail edit button: light gray ===== */
+    .editBtn, .btnEdit, .btn.edit, button[data-role="edit"]{
+      background: rgba(229,231,235,.85) !important;
+      border-color: rgba(0,0,0,.12) !important;
+      color: rgba(17,24,39,.85) !important;
+    }
+    .editBtn:hover, .btnEdit:hover, .btn.edit:hover, button[data-role="edit"]:hover{
+      background: rgba(209,213,219,.95) !important;
+    }
+
+
+    /* ===== v13 detail top-right controls order ===== */
+    .detailControls{ display:flex !important; gap:10px !important; align-items:center !important; justify-content:flex-end !important; }
+    .detailControls .themeDot{ order:2 !important; }
+    .detailControls .editBtn, .detailControls .btnEdit{ order:1 !important; }
+
+
+    /* ===== v14 home cards layout ===== */
+    #tripGrid{
+      display:flex !important;
+      flex-wrap:wrap !important;
+      gap:10px !important;             /* tighter */
+      justify-content:flex-start !important; /* left align */
+      align-items:stretch !important;
+    }
+    .tripCard{
+      width:220px !important;
+      min-height:260px !important;     /* 조금 더 길게 */
+      border-radius:28px !important;
+      padding:18px !important;
+      text-align:center !important;    /* text centered inside */
+    }
+    .tripTitle{
+      font-weight:700 !important;
+      color: var(--titleColor, rgba(17,24,39,.92)) !important;
+    }
+    .tripMeta, .tripDates{
+      color: rgba(55,65,81,.92) !important;
+      font-size: 12px !important;
+      font-weight: 400 !important;
+    }
+
+
+    /* ===== v14 trip edit modal header ===== */
+    #tripOverlay .modalHead{
+      background: rgba(229,231,235,.85) !important;
+      border-bottom: 1px solid rgba(0,0,0,.10) !important;
+    }
+    #tripOverlay .modal{
+      overflow:hidden !important;
+    }
+
+
+    /* ===== v14 detail header right controls ===== */
+    .tripHeaderRight{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:flex-end;
+    }
+    .tripHeaderRight .themeDot{
+      width:18px; height:18px;
+      border-radius:999px;
+      border:1px solid rgba(0,0,0,.12);
+      flex:0 0 auto;
+    }
+    /* edit button as gear inside trip header, left of dot */
+    .tripHeaderRight #editTripBtn{
+      background: rgba(229,231,235,.85) !important;
+      border: 1px solid rgba(0,0,0,.12) !important;
+      color: rgba(17,24,39,.85) !important;
+      width:34px; height:34px;
+      border-radius:999px;
+      display:flex; align-items:center; justify-content:center;
+      padding:0 !important;
+    }
+    .tripHeaderRight #editTripBtn:hover{ background: rgba(209,213,219,.95) !important; }
+
+
+    /* ===== v14 hide edit button in top bar container (it gets moved) ===== */
+    #detailActions #editTripBtn{ display:none; }
+
+
+/* ===== v15 palette application ===== */
+.tripBar{ background: var(--accent) !important; color: var(--onAccent, #111827) !important; font-weight:700 !important; }
+.tripCard{ background: var(--accent) !important; }
+.tripCard h3{ color: var(--titleColor, #111827) !important; }
+.stop{ background: var(--queryBg, rgba(255,255,255,.9)) !important; }
+
+
+/* ===== v16 home card delete button ===== */
+.tripCard{ position:relative !important; }
+.tripDelBtn{
+  position:absolute;
+  top:10px; right:10px;
+  width:28px; height:28px;
+  border-radius:999px;
+  border:1px solid rgba(0,0,0,.14);
+  background: rgba(255,255,255,.55);
+  color: rgba(17,24,39,.85);
+  cursor:pointer;
+  font-size:12px;
+  line-height:28px;
+  display:flex; align-items:center; justify-content:center;
+}
+.tripDelBtn:hover{ background: rgba(255,255,255,.85); }
+
+
+/* ===== v17 detail gear button ===== */
+#detailGearBtn{
+  background: rgba(229,231,235,.85);
+  border: 1px solid rgba(0,0,0,.12);
+  color: rgba(17,24,39,.85);
+  width:34px; height:34px;
+  border-radius:999px;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer;
+  font-size:14px;
+}
+#detailGearBtn:hover{ background: rgba(209,213,219,.95); }
+
+
+/* ===== v18 typography for titles ===== */
+.tripTitle, .detailTop h2, .tripBarTitle, .tripBar{
+  font-family: "Paytone One", system-ui, -apple-system, "Segoe UI", Roboto, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", Arial, sans-serif !important;
+  letter-spacing: -0.2px;
+}
+
+
+/* ===== v18 color rules ===== */
+/* Home card view */
+.tripCard{
+  background: var(--queryBg, #ffffff) !important; /* card uses queryBg */
+}
+.tripCard .tripTitle{
+  color: var(--titleColor, #111827) !important;  /* title uses titleColor */
+}
+.tripCard .tripMeta, .tripCard .tripDates, .tripCard .meta{
+  color: #111827 !important; /* fixed */
+}
+
+/* Project detail: title uses titleColor, rest unchanged */
+.detailTop h2{
+  color: var(--titleColor, #111827) !important;
+}
+
+
+/* ===== v19 titles: Sans Serif Bold ===== */
+.tripTitle, .detailTop h2, .tripBar, .tripBarTitle{
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", Arial, sans-serif !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.2px;
+}
+
+
+/* ===== v19 home card spacing + bg ===== */
+#tripGrid, .tripGrid{
+  gap: 25px !important;
+}
+.tripCard{
+  background: var(--accent, #e5e7eb) !important;
+}
+
+
+.tripCard .tripMeta, .tripCard .tripDates, .tripCard .meta{
+  color:#111827 !important;
+}
+.tripCard .tripTitle{ color: var(--titleColor, #111827) !important; }
+
+
+/* ===== v19 delete button clickability ===== */
+.tripDelBtn{ z-index: 20 !important; position:absolute !important; }
+
+
+/* ===== v20 card typography rules ===== */
+.tripTitle{
+  font-size: 24px !important;  /* ~2x */
+  line-height: 1.1 !important;
+  color: var(--titleColor, #111827) !important;
+}
+.tripDates{
+  font-weight: 700 !important;
+}
+
+
+/* ===== v22 enforce titleColor on card titles ===== */
+.tripCard .tripTitle{
+  color: var(--titleColor, #111827) !important;
+}
+
+
+/* ===== v22 card subtle shading ===== */
+.tripCard{
+  box-shadow: 0 1px 2px rgba(0,0,0,.10) !important;
+}
+
+
+/* ===== v23 card shadow ===== */
+.tripCard{
+  box-shadow: 0 3px 10px rgba(0,0,0,.14) !important;
+}
+
+
+/* ===== v23 card typography tweaks ===== */
+.tripCard .tripTitle{
+  line-height: 1.65 !important; /* increase from ~1.1 */
+}
+.tripCard .tripDates{
+  font-size: 14.4px !important; /* if base ~12px, 1.2x */
+  font-weight: 700 !important;
+}
+
+
+/* ===== v23 add-card button centering ===== */
+.addTripCard{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+.addTripCard .plus{
+  position:static !important;
+  transform:none !important;
+  margin:0 !important;
+}
+
+
+/* ===== v23 edit modal delete layout ===== */
+.modalDeleteRow{
+  margin-top:10px;
+}
+.modalDeleteRow button{
+  width:100%;
+  padding:12px 14px;
+  border-radius:14px;
+  border:1px solid rgba(0,0,0,.14);
+  background: rgba(239,68,68,.10);
+  color: rgba(185,28,28,1);
+  font-weight:600;
+  cursor:pointer;
+}
+.modalDeleteRow button:hover{ background: rgba(239,68,68,.16); }
+
+
+#tripOverlay .modalFoot #deleteTripBtn{ display:none !important; }
+
+
+/* ===== v24 card title line-height tighter ===== */
+.tripCard .tripTitle{ line-height: 1.32 !important; }
+
+
+/* ===== v24 add-card perfect center ===== */
+.addTripCard{ display:flex !important; align-items:center !important; justify-content:center !important; }
+.addTripCard .plus{ display:flex !important; align-items:center !important; justify-content:center !important; height:100% !important; width:100% !important; }
+
+
+/* ===== v24 modal delete at bottom ===== */
+.modalDeleteRow{ margin-top: 16px; }
+
+
+/* ===== v25 fixes ===== */
+.tripCard.tripPlus{ display:flex !important; align-items:center !important; justify-content:center !important; }
+.tripCard.tripPlus{ min-height: 220px; } /* keep tall like other cards */
+.tripCard.tripPlus{ cursor:pointer; }
+
+
+/* v25 modal delete full-width at bottom */
+.modalDeleteRow{ width:100%; padding: 0 18px 14px; }
+.modalDeleteRow #deleteTripBtn{ width:100% !important; border-radius:14px !important; }
+
+
+.yearGrid{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; padding:14px; }
+.yearOpt{ border:1px solid #e5e7eb; background:#fff; border-radius:10px; padding:10px 0; font-size:12px; cursor:pointer; }
+.yearOpt.active{ background:#f3f4f6; border-color:#d1d5db; }
+.modalDeleteRow{ padding:0 16px 12px 16px; }
+.btn.full{ width:100%; justify-content:center; }
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <section class="left">
-      <div class="header">
-        <div class="toprow">
-          <div>
-            <h1>Emily, Amy in SHANGHAI</h1>
-            <div class="sub" id="subtitle">탭을 바꾸면 해당 일차의 스팟/동선이 바뀐다.</div>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand" id="brand">{name}-in-World</div>
+
+      <div class="actions" id="homeActions">
+        <div class="seg" id="viewSeg">
+          <button id="segCards" class="active">카드</button>
+          <button id="segCal">캘린더</button>
+        </div>
+        <button class="btn primary" id="addTripBtn">＋</button>
+      </div>
+
+      <div class="actions" id="detailActions" style="display:none;">
+        <button class="btn ghost small" id="backBtn">← 홈</button>
+        <button class="btn primary small" id="editTripBtn" style="display:none;">⚙️</button>
+      </div>
+    </div>
+
+    <div id="homeView">
+      <div id="cardsView">
+        <div class="grid" id="tripGrid"></div>
+      </div>
+
+      <div id="calendarView" style="display:none;">
+        <div class="calendarBar">
+          <button class="yearBtn" id="yearBtn">2025 ▾</button>
+          <div class="hint" style="margin:0; max-width:520px;">
+            When이 <b>미정</b>인 여행은 캘린더에 표시되지 않는다. (Trip Detail에서 날짜를 넣으면 자동 표시됨)
           </div>
-          <div class="tabs" id="tabs"></div>
+        </div>
+        <div class="months" id="monthsGrid"></div>
+      </div>
+    </div>
+
+    <div id="detailView" style="display:none;">
+      <div class="detailWrap">
+        <div class="detailTop" id="detailTop"></div>
+        <div class="dayTabs" id="dayTabs"></div>
+        <div class="content">
+          <div class="left">
+            <div id="stopsList"></div>
+            <button class="btn" id="addStopBtn" style="width:100%; margin-top:8px;">스팟 추가</button>
+            <div class="hint">
+              • Query 수정 후 <b>Enter</b> 치면 해당 스팟만 다시 인식한다.<br/>
+              • 저장은 자동(localStorage)이다.
+            </div>
+          </div>
+          <div class="right">
+            <div id="map"></div>
+          </div>
         </div>
       </div>
-      <div class="list" id="list"></div>
-
-      <div style="padding: 0 12px 12px; background: var(--panel2);">
-        <button class="btn primary" id="addStopBtn" style="width:100%; padding: 10px 12px; border-radius: 14px;">
-          ➕ 스팟 추가
-        </button>
-      </div>
-
-      <div class="hint">
-        • Query 수정 후 <b>Enter</b> 치면 해당 스팟만 다시 인식한다.<br/>
-        • 왼쪽 카드 클릭 = 오른쪽 지도에서 해당 스팟으로 이동.
-      </div>
-    </section>
-
-    <section class="right">
-      <div class="badge" id="routeHint">동선 힌트</div>
-      <div id="map"></div>
-    </section>
+    </div>
   </div>
 
-  <script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-    crossorigin=""
-  ></script>
-  <script>
-    const days = [
-  {
-    "id": "day1",
-    "label": "Day 1 (5/23)",
-    "route_hint": "PVG → 난징동루 → 난징서루/징안 → 프렌치콘세션 → 와이탄 → 호텔",
-    "stops": [
-      {
-        "time": "10:00",
-        "emoji": "✈️",
-        "name": "PVG 도착",
-        "query": "Shanghai Pudong International Airport, Shanghai"
-      },
-      {
-        "time": "11:30",
-        "emoji": "💅",
-        "name": "네일+속눈썹 (小黑瓶美甲美睫)",
-        "query": "Shanghai Jing'an No.118, Wuzhen Road"
-      },
-      {
-        "time": "14:00",
-        "emoji": "🍲",
-        "name": "점심: 东北人家(广西北路)",
-        "query": "430, Guangxi North Road, Shanghai"
-      },
-      {
-        "time": "15:10",
-        "emoji": "🧸",
-        "name": "홍이플라자 (Pop Mart + Sanrio + Miniso)",
-        "query": "Huangpu 299, Nanjing East Road"
-      },
-      {
-        "time": "16:40",
-        "emoji": "🎀",
-        "name": "SHUSHU/TONG (南京西路)",
-        "query": "No. 1225, Nanjing West Road, Shanghai"
-      },
-      {
-        "time": "17:30",
-        "emoji": "🖼️",
-        "name": "永源路 문화공간",
-        "query": "永源路, Shanghai"
-      },
-      {
-        "time": "18:15",
-        "emoji": "🛍️",
-        "name": "BASEMENT FG (新乐路82号)",
-        "query": "Xuhui No.82, Shanghai"
-      },
-      {
-        "time": "18:45",
-        "emoji": "👗",
-        "name": "Subdued (武康路378号)",
-        "query": "Xuhui No.378, Shanghai"
-      },
-      {
-        "time": "19:30",
-        "emoji": "🪞",
-        "name": "Room 707 (瑞金二路/인근)",
-        "query": "Huangpu Ruijin 2nd Road"
-      },
-      {
-        "time": "21:00",
-        "emoji": "🌃",
-        "name": "야경 식당: Regent on the Bund",
-        "query": "Regent Shanghai on the Bund"
-      },
-      {
-        "time": "23:10",
-        "emoji": "🏨",
-        "name": "호텔: JI Hotel (Sichuan Zhong Rd)",
-        "query": "607 Sichuan Zhong Road, Shanghai"
-      }
-    ]
-  },
-  {
-    "id": "day2",
-    "label": "Day 2 (5/24)",
-    "route_hint": "호텔 → 헤드스파 → 우캉 → 点都德 → 荣宅 → 유람선 → 와이탄/동방명주 → 훠궈 → 호텔",
-    "stops": [
-      {
-        "time": "09:30",
-        "emoji": "🏨",
-        "name": "호텔 출발",
-        "query": "607 Sichuan Zhong Road, Shanghai"
-      },
-      {
-        "time": "10:15",
-        "emoji": "💆‍♀️",
-        "name": "헤드스파",
-        "query": "外滩街道九江路 200-1"
-      },
-      {
-        "time": "11:40",
-        "emoji": "📸",
-        "name": "우캉맨숀",
-        "query": "武康大楼, Shanghai"
-      },
-      {
-        "time": "13:10",
-        "emoji": "🥟",
-        "name": "点都德 (苏河湾/福建北路)",
-        "query": "fujian north road no.100"
-      },
-      {
-        "time": "14:20",
-        "emoji": "🏛️",
-        "name": "Prada 荣宅",
-        "query": "186 North Shaanxi Rd"
-      },
-      {
-        "time": "16:30",
-        "emoji": "⛴️",
-        "name": "황푸강 유람선",
-        "query": "黄浦江游览（十六铺码头）"
-      },
-      {
-        "time": "18:00",
-        "emoji": "📸",
-        "name": "와이탄",
-        "query": "外滩 上海市黄浦区中山东一路"
-      },
-      {
-        "time": "18:40",
-        "emoji": "🗼",
-        "name": "동방명주",
-        "query": "东方明珠电视塔"
-      },
-      {
-        "time": "20:00",
-        "emoji": "🍲",
-        "name": "훠궈",
-        "query": "Shanghai, Pudong, Shangcheng Rd"
-      },
-      {
-        "time": "23:00",
-        "emoji": "🏨",
-        "name": "호텔 복귀",
-        "query": "607 Sichuan Zhong Road, Shanghai"
-      }
-    ]
-  },
-  {
-    "id": "day3",
-    "label": "Day 3 (5/25)",
-    "route_hint": "호텔 → 헤드스파 → 양꼬치(长寿路) → 1000 Trees(莫干山路) → SHA 출국",
-    "stops": [
-      {
-        "time": "09:30",
-        "emoji": "🏨",
-        "name": "호텔 출발",
-        "query": "607 Sichuan Zhong Road, Shanghai"
-      },
-      {
-        "time": "10:00",
-        "emoji": "💆‍♀️",
-        "name": "헤드스파(다른 곳)",
-        "query": "外滩街道九江路 200-1"
-      },
-      {
-        "time": "12:00",
-        "emoji": "🍢",
-        "name": "점심: 양꼬치",
-        "query": "432 Changshou Rd, Pu Tuo Qu, Shang Hai"
-      },
-      {
-        "time": "13:30",
-        "emoji": "🌳",
-        "name": "1000 Trees",
-        "query": "Moganshan Rd, Putuo, Shanghai"
-      },
-      {
-        "time": "14:30",
-        "emoji": "✈️",
-        "name": "SHA 공항 이동/출국",
-        "query": "Shanghai Hongqiao International Airport"
-      }
-    ]
+  <!-- Name modal -->
+  <div class="overlay" id="nameOverlay">
+    <div class="modal">
+      <div class="modalHead">
+        <h3 class=\"tripTitle\">name 입력</h3>
+        <div></div>
+      </div>
+      <div class="modalBody">
+        <div class="field">
+          <label>name</label>
+          <input id="nameInput" placeholder="예: Emily" />
+        </div>
+        <div class="hint">이 이름은 타이틀(예: <b>Emily-in-World</b>)과 여행 제목에 사용된다.</div>
+      </div>
+      <div class="modalFoot">
+        <button class="btn primary" id="saveNameBtn">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trip create/edit modal -->
+  <div class="overlay" id="tripOverlay">
+    <div class="modal">
+      <div class="modalHead">
+        <h3 id="tripModalTitle">여행 추가</h3>
+        <button class="btn ghost small" id="closeTripModal">닫기</button>
+      </div>
+      <div class="modalBody">
+        <div class="field">
+          <label>Where</label>
+          <input id="whereInput" placeholder="예: Shanghai" />
+        </div>
+
+        <div class="field">
+          <label>With whom</label>
+          <div class="tog">
+            <div class="chip active" id="withAlone">Alone</div>
+            <div class="chip" id="withSomeone">With someone</div>
+            <input id="withWhomInput" placeholder="예: Amy" style="flex:1; min-width:180px;" disabled />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>When</label>
+          <div class="tog" style="justify-content:space-between;">
+            <div class="tog">
+              <input type="checkbox" id="whenTbd" />
+              <span style="font-weight:700; color:var(--muted)">미정</span>
+            </div>
+          </div>
+          <div class="row2">
+            <input type="date" id="startDate" />
+            <input type="date" id="endDate" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>테마 컬러</label>
+          <select id="colorSelect">
+            <option value="Apricot">Apricot</option>
+            <option value="Sky">Sky</option>
+            <option value="Pink">Pink</option>
+            <option value="Lavender">Lavender</option>
+            <option value="Mint">Mint</option>
+            <option value="Yellow">Yellow</option>
+            <option value="White">White</option>
+            <option value="Cocoa">Cocoa</option>
+          </select>
+        </div>
+
+        <div class="hint">
+          • With someone 선택 시 제목이 <b>{name}, Amy in Danang</b> 형태가 된다.<br/>
+          • When 미정이면 캘린더에 표시되지 않는다.
+        </div>
+      </div>
+      <div class="modalDeleteRow"><button class="btn danger full" id="deleteTripBtn" style="display:none;">삭제</button></div>
+      <div class="modalFoot">
+        <button class="btn primary" id="saveTripBtn">저장</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+const LS_KEY = "name_in_world_state_v1";
+function uid(){ return Math.random().toString(16).slice(2) + "-" + Date.now().toString(16); }
+function daysBetween(a,b){ return Math.floor((b-a)/(1000*60*60*24)); }
+function parseDate(s){ if(!s) return null; const d=new Date(String(s).trim()+"T00:00:00"); return isNaN(d.getTime())?null:d; }
+
+function titleForTrip(trip, userName){
+  const where = (trip.where||"").trim() || "Trip";
+  if(trip.withMode==="with" && (trip.withWhom||"").trim()){
+    return `${userName}, ${trip.withWhom.trim()} in ${where}`;
   }
+  return `${userName} in ${where}`;
+}
+function dateRangeLabel(trip){
+  if(!trip.startDate || !trip.endDate) return "기간: 미정";
+  return `기간: ${trip.startDate} ~ ${trip.endDate}`;
+}
+function loadState(){ try{ const raw=localStorage.getItem(LS_KEY); return raw?JSON.parse(raw):null; }catch(e){ return null; } }
+function saveState(){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+
+
+  const THEME_PRESETS = [
+  {"key":"Apricot","themeAccent":"#F2AA84","titleColor":"#B54E29","queryBg":"#FCEEE6","onAccent":"#FFFFFF"},
+  {"key":"Sky","themeAccent":"#BFE7FB","titleColor":"#0B4A6E","queryBg":"#F2FAFE","onAccent":"#111827"},
+  {"key":"Pink","themeAccent":"#F3D4E7","titleColor":"#7A2F57","queryBg":"#FDF6FA","onAccent":"#111827"},
+  {"key":"Lavender","themeAccent":"#D2CEF6","titleColor":"#3F3A86","queryBg":"#F6F5FD","onAccent":"#111827"},
+  {"key":"Mint","themeAccent":"#BCFCDF","titleColor":"#0F6B5B","queryBg":"#F2FEF9","onAccent":"#111827"},
+  {"key":"Yellow","themeAccent":"#FFFFB7","titleColor":"#766500","queryBg":"#FFFFF1","onAccent":"#111827"},
+  {"key":"White","themeAccent":"#F6F7F9","titleColor":"#111827","queryBg":"#FDFDFE","onAccent":"#111827"},
+  {"key":"Cocoa","themeAccent":"#D3C1B5","titleColor":"#5A3D2E","queryBg":"#F6F3F0","onAccent":"#FFFFFF"}
 ];
-    let currentDayIdx = 0;
+  function presetByKey(k){ return THEME_PRESETS.find(p=>p.key===k) || THEME_PRESETS[0]; }
 
-    const tabsEl = document.getElementById("tabs");
-    const listEl = document.getElementById("list");
-    const subtitleEl = document.getElementById("subtitle");
-    const routeHintEl = document.getElementById("routeHint");
+  
+  function presetForTrip(trip){
+    if(!trip) return THEME_PRESETS[0];
+    if(trip.themeKey) return presetByKey(trip.themeKey);
+    // try match by accent color
+    const c = String(trip.color||trip.themeAccent||"").toLowerCase();
+    const found = THEME_PRESETS.find(p => String(p.themeAccent).toLowerCase()===c);
+    return found || THEME_PRESETS[0];
+  }
+  function hydrateTripPalette(trip){
+    const p = presetForTrip(trip);
+    if(!trip.themeKey) trip.themeKey = p.key;
+    if(!trip.color) trip.color = p.themeAccent;
+    if(!trip.titleColor) trip.titleColor = p.titleColor;
+    if(!trip.queryBg) trip.queryBg = p.queryBg;
+    if(!trip.onAccent) trip.onAccent = p.onAccent;
+    return trip;
+  }
+function populateThemeSelect(sel, currentKey){
+    if(!sel) return;
+    sel.innerHTML = THEME_PRESETS.map(p=>`<option value="${p.key}">${p.key}</option>`).join("");
+    sel.value = currentKey || THEME_PRESETS[0].key;
+  }
+let state = loadState() || { userName:"", viewMode:"cards", calendarYear:(new Date()).getFullYear(), trips:[] };
 
-    const map = L.map('map', { zoomControl: true }).setView([31.2304, 121.4737], 11);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+// defaults / migration
+if(state && typeof state==="object"){
+  if(state.calendarYear==null){ state.calendarYear = state.selectedYear ?? (new Date()).getFullYear(); }
+  if(state.selectedYear!=null) delete state.selectedYear;
+  if(!state.viewMode) state.viewMode="cards";
+  if(!state.trips) state.trips=[];
+}
 
-    function makeEmojiIcon(emoji) {
-      return L.divIcon({
-        className: '',
-        html: `<div style="
-          width:30px;height:30px;border-radius:999px;
-          background: #e6e8ec;
-          display:flex;align-items:center;justify-content:center;
-          border: 2px solid #c9ced6;
-          box-shadow:0 8px 18px rgba(31,35,40,0.12);
-          font-size:16px;
-          ">{EMOJI}</div>`.replace('{EMOJI}', emoji || '📍'),
-        iconSize: [30,30],
-        iconAnchor: [15,15],
+if(!state.trips || !state.trips.length){
+  state.trips = [{
+    id: uid(),
+    where: "SHANGHAI",
+    startDate: "2025-05-23",
+    endDate: "2025-05-25",
+    withMode: "with",
+    withWhom: "Amy",
+    color: "#bfe8ff",
+    days: [{id:uid(),label:"Day 1",stops:[]},{id:uid(),label:"Day 2",stops:[]},{id:uid(),label:"Day 3",stops:[]}]
+  }];
+}
+
+const brandEl=document.getElementById("brand");
+const homeView=document.getElementById("homeView");
+const detailView=document.getElementById("detailView");
+const homeActions=document.getElementById("homeActions");
+const detailActions=document.getElementById("detailActions");
+const segCards=document.getElementById("segCards");
+const segCal=document.getElementById("segCal");
+const cardsView=document.getElementById("cardsView");
+const calendarView=document.getElementById("calendarView");
+const tripGrid=document.getElementById("tripGrid");
+const monthsGrid=document.getElementById("monthsGrid");
+const yearBtn=document.getElementById("yearBtn");
+const addTripBtn=document.getElementById("addTripBtn");
+const backBtn=document.getElementById("backBtn");
+const editTripBtn=document.getElementById("editTripBtn");
+
+const nameOverlay=document.getElementById("nameOverlay");
+const nameInput=document.getElementById("nameInput");
+const saveNameBtn=document.getElementById("saveNameBtn");
+
+const tripOverlay=document.getElementById("tripOverlay");
+const tripModalTitle=document.getElementById("tripModalTitle");
+const closeTripModal=document.getElementById("closeTripModal");
+const whereInput=document.getElementById("whereInput");
+const withAlone=document.getElementById("withAlone");
+const withSomeone=document.getElementById("withSomeone");
+const withWhomInput=document.getElementById("withWhomInput");
+const whenTbd=document.getElementById("whenTbd");
+const startDate=document.getElementById("startDate");
+const endDate=document.getElementById("endDate");
+const colorSelect=document.getElementById("colorSelect");
+const saveTripBtn=document.getElementById("saveTripBtn");
+const deleteTripBtn=document.getElementById("deleteTripBtn");
+
+const detailTop=document.getElementById("detailTop");
+const dayTabs=document.getElementById("dayTabs");
+const stopsList=document.getElementById("stopsList");
+const addStopBtn=document.getElementById("addStopBtn");
+
+let currentTripId=null;
+let currentDayIdx=0;
+
+/* Map */
+let map, polyline;
+let markers = []; // {marker, tripId, dayIdx, stopIdx}
+
+function ensureMap(){
+  if(map) return;
+  map = L.map("map").setView([31.2304, 121.4737], 12);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom:19, attribution:"&copy; OpenStreetMap" }).addTo(map);
+  polyline = L.polyline([], { weight:4, opacity:0.85 }).addTo(map);
+}
+function makeEmojiIcon(emoji){
+  const html = `<div class="emojiBadge">${emoji||"📍"}</div>`;
+  return L.divIcon({ html, className:"", iconSize:[34,34], iconAnchor:[17,17] });
+}
+async function geocode(query){
+  const url = "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" + encodeURIComponent(query);
+  const res = await fetch(url, { headers: { "Accept-Language":"en" } });
+  if(!res.ok) throw new Error("geocode failed");
+  const data = await res.json();
+  if(!data || !data.length) return null;
+  return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon), display: data[0].display_name };
+}
+function clearMapForTrip(){
+  if(!map) return;
+  markers.forEach(m=>map.removeLayer(m.marker));
+  markers=[];
+  polyline.setLatLngs([]);
+}
+function redrawPolyline(trip, dayIdx){
+  const pts = markers.filter(m=>m.tripId===trip.id && m.dayIdx===dayIdx).sort((a,b)=>a.stopIdx-b.stopIdx).map(m=>m.marker.getLatLng());
+  polyline.setLatLngs(pts);
+}
+function fitToMarkers(trip, dayIdx){
+  const pts = markers.filter(m=>m.tripId===trip.id && m.dayIdx===dayIdx).map(m=>m.marker.getLatLng());
+  if(!pts.length) return;
+  map.fitBounds(L.latLngBounds(pts).pad(0.25));
+}
+async function upsertMarkerForStop(trip, dayIdx, stopIdx){
+  ensureMap();
+  const stop = trip.days[dayIdx].stops[stopIdx];
+  if(!stop || !stop.query) return;
+  const statusEl = document.getElementById(`status-${stopIdx}`);
+  if(statusEl) statusEl.textContent = "자동 인식 중...";
+  try{
+    const r = await geocode(stop.query);
+    if(!r){
+      if(statusEl) statusEl.textContent = "⚠ 위치 자동 인식 실패 — Query를 더 정확한 주소/지점명으로 바꿔";
+      return;
+    }
+    stop.lat=r.lat; stop.lng=r.lng; stop._display=r.display;
+    if(statusEl) statusEl.textContent = "OK";
+
+    const existing = markers.find(m=>m.tripId===trip.id && m.dayIdx===dayIdx && m.stopIdx===stopIdx);
+    if(existing){
+      map.removeLayer(existing.marker);
+      markers = markers.filter(m=>m!==existing);
+    }
+    const marker = L.marker([r.lat,r.lng], { icon: makeEmojiIcon(stop.emoji) }).addTo(map);
+    marker.on("click", ()=> map.setView([r.lat,r.lng], 16, {animate:true}));
+    marker.bindPopup(`<b>${stop.emoji||"📍"} ${escapeHtml(stop.name||"Spot")}</b><br/>${escapeHtml(stop.query||"")}`);
+    markers.push({ marker, tripId:trip.id, dayIdx, stopIdx });
+    redrawPolyline(trip, dayIdx);
+    fitToMarkers(trip, dayIdx);
+    saveState();
+  }catch(e){
+    if(statusEl) statusEl.textContent = "⚠ 네트워크/인식 오류 — 다시 시도";
+  }
+}
+
+/* Render */
+function setBrand(){
+  const name = state.userName || "{name}";
+  brandEl.textContent = `${name}-in-World`;
+  document.title = `${name}-in-World`;
+}
+function showHome(){
+  document.body.classList.add('home-mode');
+  document.body.classList.remove('detail-mode');
+  document.documentElement.style.removeProperty('--detailAccent');
+  currentTripId=null;
+  homeView.style.display="";
+  detailView.style.display="none";
+  homeActions.style.display="flex";
+  detailActions.style.display="none";
+  renderHome();
+}
+function showDetail(tripId){
+  document.body.classList.remove('home-mode');
+  document.body.classList.add('detail-mode');
+  currentTripId=tripId;
+  currentDayIdx=0;
+  homeView.style.display="none";
+  detailView.style.display="";
+  homeActions.style.display="none";
+  detailActions.style.display="flex";
+  renderDetail();
+}
+
+function render(){
+  // Single entry-point re-render so event handlers can safely call `render()`.
+  if(currentTripId){
+    renderDetail();
+    return;
+  }
+  renderHome();
+  if(state.homeMode === "calendar"){
+    renderCalendar();
+  }
+}
+
+function renderHome(){
+  document.body.classList.add('home-mode');
+  document.body.classList.remove('detail-mode');
+  document.documentElement.style.removeProperty('--detailAccent');
+  if(state.viewMode==="calendar"){
+    segCal.classList.add("active"); segCards.classList.remove("active");
+    cardsView.style.display="none"; calendarView.style.display="";
+  }else{
+    segCards.classList.add("active"); segCal.classList.remove("active");
+    cardsView.style.display=""; calendarView.style.display="none";
+  }
+
+  tripGrid.innerHTML="";
+  state.trips.forEach(trip=>{ trip = hydrateTripPalette(trip);
+    const card=document.createElement("div");
+    card.className="tripCard";
+    card.style.setProperty("--accent", (trip.color||presetForTrip(trip).themeAccent||"#e5e7eb"));
+card.style.setProperty("--titleColor", (trip.titleColor||presetForTrip(trip).titleColor||"#111827"));
+card.style.setProperty("--onAccent", trip.onAccent||"#111827");
+    card.style.setProperty("--queryBg", trip.queryBg||"#fff");
+card.innerHTML = `<button class="tripDelBtn" data-del="${trip.id}" type="button" title="삭제">×</button>
+      <div class="tripTitle">${escapeHtml((()=>{const me=(trip.name||state.userName||"Me").trim()||"Me";const withMode=trip.withMode||((trip.withWhom&&String(trip.withWhom).trim())?"with":"alone");const withWhom=String(trip.withWhom||"").trim();return (withMode==="alone"||!withWhom)? me : (me+", "+withWhom);})())}<br>${escapeHtml("in " + (trip.where||trip.destination||"Trip"))}</div>
+<div class="tripDates">${escapeHtml(trip.startDate&&trip.endDate?(`${trip.startDate} ~ ${trip.endDate}`):"When: 미정")}</div>
+    `;
+    
+    
+    // removeDuplicateGears: keep only first settings/gear button inside card
+    (function(){
+      const gearBtns = card.querySelectorAll(".tripSettingsBtn, .gearBtn, .tripEditBtn");
+      if(gearBtns && gearBtns.length>1){
+        for(let i=1;i<gearBtns.length;i++) gearBtns[i].remove();
+      }
+    })();
+// Delete button handler (prevent card navigation)
+    const delBtn = card.querySelector(".tripDelBtn");
+    if(delBtn){
+      delBtn.addEventListener("click",(ev)=>{
+        ev.preventDefault();
+        ev.stopPropagation();
+        const id = delBtn.getAttribute("data-del");
+        if(!id) return;
+        if(confirm("이 여행 프로젝트를 삭제할까?")){
+          state.trips = (state.trips||[]).filter(t => String(t.id)!==String(id));
+          saveState();
+          render();
+        }
       });
     }
+card.addEventListener("click", ()=>showDetail(trip.id));
+    tripGrid.appendChild(card);
+  });
+  const plus=document.createElement("div");
+  plus.className="tripCard tripPlus";
+  plus.textContent="+";
+  plus.addEventListener("click", ()=>openTripModal("create"));
+  tripGrid.appendChild(plus);
 
-    async function geocode(q) {
-      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`;
-      const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
-      const data = await res.json();
-      if (!data || !data[0]) return null;
-      return {
-        lat: parseFloat(data[0].lat),
-        lon: parseFloat(data[0].lon),
-        display: data[0].display_name
-      };
-    }
+  renderCalendar();
+  yearBtn.textContent = `${state.calendarYear} ▾`;
+}
+function renderCalendar(){
+  if(state.calendarYear==null) state.calendarYear = (new Date()).getFullYear();
+  if(yearBtn) yearBtn.textContent = `${state.calendarYear} ▾`;
+  monthsGrid.innerHTML="";
+  const months=["1 January","2 February","3 March","4 April","5 May","6 June","7 July","8 August","9 September","10 October","11 November","12 December"];
+  for(let m=0;m<12;m++){
+    const cell=document.createElement("div"); cell.className="monthCell";
+    const head=document.createElement("div"); head.className="monthHead"; head.textContent=months[m];
+    const body=document.createElement("div"); body.className="monthBody";
+    const monthStart=new Date(state.calendarYear,m,1);
+    const monthEnd=new Date(state.calendarYear,m+1,0);
 
-    // state per day
-    const state = days.map(d => {
-      return {
-        markersByStop: new Array(d.stops.length).fill(null),
-        coordsByStop:  new Array(d.stops.length).fill(null),
-        routeLine: null
-      };
+    state.trips.forEach(trip=>{ trip = hydrateTripPalette(trip);
+      if(!trip.startDate || !trip.endDate) return;
+      const s=parseDate(trip.startDate), e=parseDate(trip.endDate);
+      if(!s || !e) return;
+      if(e < monthStart || s > monthEnd) return;
+      const bar=document.createElement("div");
+      bar.className="tripBar";
+      bar.style.setProperty("--accent", (presetForTrip(trip).themeAccent));
+      bar.textContent = titleForTrip(trip, state.userName||"Me");
+      bar.title = titleForTrip(trip, state.userName||"Me");
+      bar.addEventListener("click", ()=>showDetail(trip.id));
+      body.appendChild(bar);
     });
 
-    function setStatus(i, text, isWarn=false) {
-      const el = document.getElementById(`status-${i}`);
-      if (!el) return;
-      el.textContent = text;
-      el.className = isWarn ? "status warn" : "status";
+    cell.appendChild(head); cell.appendChild(body);
+    monthsGrid.appendChild(cell);
+  }
+}
+function renderDetail(){
+  let trip = state.trips.find(t=>t.id===currentTripId);
+  if(trip) { trip = hydrateTripPalette(trip); }
+  
+  if(!trip){ showHome(); return; }
+  document.documentElement.style.setProperty('--detailAccent', trip.color || '#e5e7eb');
+  detailTop.innerHTML = `
+    <div>
+      <h2>${escapeHtml(titleForTrip(trip, state.userName||"Me"))}</h2>
+      <div class="meta tripMeta">${escapeHtml(dateRangeLabel(trip))}</div>
+    </div>
+    <div class="tripHeaderRight">
+      <button id="detailGearBtn" type="button" aria-label="편집">⚙️</button>
+      <div class="themeDot" style="background:${trip.color||"#ddd"};"></div>
+    </div>
+  `;
+
+  
+  
+  const gear=document.getElementById("detailGearBtn");
+  if(gear){ gear.onclick=()=>{ editingTripId=currentTripId; openTripModal("edit"); }; }
+
+dayTabs.innerHTML="";
+  trip.days.forEach((d,idx)=>{
+    const b=document.createElement("button");
+    b.className="tab"+(idx===currentDayIdx?" active":"");
+    b.textContent=d.label||`Day ${idx+1}`;
+    b.addEventListener("click", ()=>{ currentDayIdx=idx; renderDetail(); });
+    dayTabs.appendChild(b);
+  });
+
+  renderStops(trip);
+
+  ensureMap();
+  setTimeout(()=>{ try{ map && map.invalidateSize(); }catch(e){} }, 0);
+  clearMapForTrip();
+
+  trip.days[currentDayIdx].stops.forEach((s,i)=>{
+    if(s.lat && s.lng){
+      const marker=L.marker([s.lat,s.lng],{icon:makeEmojiIcon(s.emoji)}).addTo(map);
+      marker.on("click", ()=>map.setView([s.lat,s.lng],16,{animate:true}));
+      marker.bindPopup(`<b>${s.emoji||"📍"} ${escapeHtml(s.name||"Spot")}</b><br/>${escapeHtml(s.query||"")}`);
+      markers.push({marker,tripId:trip.id,dayIdx:currentDayIdx,stopIdx:i});
+    }else if(s.query){
+      upsertMarkerForStop(trip,currentDayIdx,i);
+    }
+  });
+  redrawPolyline(trip,currentDayIdx);
+  fitToMarkers(trip,currentDayIdx);
+}
+
+function renderStops(trip){
+  const day = trip.days[currentDayIdx];
+  stopsList.innerHTML = "";
+  day.stops.forEach((s,idx)=>{
+    const wrap = document.createElement("div");
+    wrap.className = "stop";
+    wrap.innerHTML = `
+      <div class="spotHeader">
+        <div class="emojiCell" style="position:relative;">
+          <button class="emojiBtn" id="emojiBtn-${idx}" title="이모지 선택">${escapeHtml(s.emoji||"📍")}</button>
+          <div class="emojiPop" id="emojiPop-${idx}" aria-hidden="true"></div>
+        </div>
+
+        <div class="timeCell">
+          <div class="timeWrap">
+            <input id="hh-${idx}" inputmode="numeric" maxlength="2" placeholder="HH" value="${escapeAttr((s.time||"").split(":")[0]||"")}" />
+            <span class="colon">:</span>
+            <input id="mm-${idx}" inputmode="numeric" maxlength="2" placeholder="MM" value="${escapeAttr((s.time||"").split(":")[1]||"")}" />
+          </div>
+        </div>
+
+        <div class="spotNameWrap" style="display:flex;align-items:center;gap:8px;">
+          <div class="spotNum">${idx+1}.</div>
+          <input id="n-${idx}" value="${escapeAttr(s.name||"")}" placeholder="스팟 이름 (입력)" />
+        </div>
+
+        <button class="iconBtnX" id="del-${idx}" title="삭제">X</button>
+      </div>
+
+      <div class="qRow">
+        <input id="q-${idx}" value="${escapeAttr(s.query||"")}" placeholder="Query (주소/지점명)" />
+        <button class="iconBtnCheck" id="applyMini-${idx}" title="적용">✓</button>
+      </div>
+
+      <div class="spotFoot">
+        <div class="statusLine" id="status-${idx}">
+          ${s.query ? (s.lat&&s.lng ? '<span class="statusDot">✓</span><span>인식 완료</span>' : '<span class="statusDot">⏳</span><span>자동 인식 중...</span>') : '<span style="opacity:.0;">.</span>'}
+        </div>
+        <div class="hintRight">Enter로 반영</div>
+      </div>
+    `;
+    stopsList.appendChild(wrap);
+
+    const emojiBtn = document.getElementById(`emojiBtn-${idx}`);
+    const emojiPop = document.getElementById(`emojiPop-${idx}`);
+    const hhEl = document.getElementById(`hh-${idx}`);
+    const mmEl = document.getElementById(`mm-${idx}`);
+    const nEl  = document.getElementById(`n-${idx}`);
+    const qEl  = document.getElementById(`q-${idx}`);
+    const applyMini = document.getElementById(`applyMini-${idx}`);
+
+    document.getElementById(`del-${idx}`).addEventListener("click", ()=>{
+      day.stops.splice(idx,1);
+      saveState();
+      renderDetail();
+    });
+
+    function syncToState(){
+      const hh = (hhEl.value||"").replace(/\D/g,"").slice(0,2);
+      const mm = (mmEl.value||"").replace(/\D/g,"").slice(0,2);
+      const hh2 = hh.padStart(2,"0");
+      const mm2 = mm.padStart(2,"0");
+      s.time = (hh||mm) ? `${hh2}:${mm2}` : "";
+      s.name = nEl.value.trim();
+      s.query = qEl.value.trim();
+      s.emoji = (emojiBtn.textContent||"📍").trim() || "📍";
     }
 
-    function clearMapForDay(dayIdx) {
-      const st = state[dayIdx];
-      // remove markers + line
-      st.markersByStop.forEach(m => { if (m) m.remove(); });
-      if (st.routeLine) st.routeLine.remove();
-      st.routeLine = null;
-      st.markersByStop = new Array(days[dayIdx].stops.length).fill(null);
-      st.coordsByStop  = new Array(days[dayIdx].stops.length).fill(null);
-    }
-
-    function updateLineForDay(dayIdx) {
-      const st = state[dayIdx];
-      const coords = st.coordsByStop.filter(Boolean);
-      if (st.routeLine) {
-        st.routeLine.remove();
-        st.routeLine = null;
-      }
-      if (coords.length >= 2) {
-        st.routeLine = L.polyline(coords, { weight: 4, opacity: 0.85 }).addTo(map);
-        map.fitBounds(st.routeLine.getBounds(), { padding: [24, 24] });
-      } else if (coords.length === 1) {
-        map.setView(coords[0], 14);
-      }
-    }
-
-    async function upsertMarker(dayIdx, i) {
-      const d = days[dayIdx];
-      const st = state[dayIdx];
-      const stop = d.stops[i];
-
-      setStatus(i, "자동 인식 중…");
-      const g = await geocode(stop.query);
-      if (!g) {
-        st.coordsByStop[i] = null;
-        setStatus(i, "⚠ 위치 자동 인식 실패 — Query를 더 정확한 주소/지점명으로 바꿔줘", true);
-        if (st.markersByStop[i]) {
-          st.markersByStop[i].remove();
-          st.markersByStop[i] = null;
-        }
-        updateLineForDay(dayIdx);
+    async function apply(){
+      syncToState();
+      saveState();
+      if(!s.query){
+        s.lat=null; s.lng=null; s.addr=null;
+        saveState();
+        renderDetail();
         return;
       }
-
-      const ll = [g.lat, g.lon];
-      st.coordsByStop[i] = ll;
-
-      let m = st.markersByStop[i];
-      if (!m) {
-        m = L.marker(ll, { icon: makeEmojiIcon(stop.emoji) }).addTo(map);
-        st.markersByStop[i] = m;
-      } else {
-        m.setLatLng(ll);
-        m.setIcon(makeEmojiIcon(stop.emoji));
-      }
-
-      m.bindPopup(`
-        <div style="font-size:13px;line-height:1.35;">
-          <b>${stop.emoji || '📍'} ${i+1}. ${stop.name}</b><br/>
-          <span style="color:#5c5f66;">${stop.time}</span><br/>
-          <span style="font-size:11px;color:#5c5f66;">${g.display}</span>
-        </div>
-      `);
-
-      setStatus(i, "✅ 인식 완료");
-      updateLineForDay(dayIdx);
-    }
-
-    async function geocodeAll(dayIdx) {
-      for (let i=0; i<days[dayIdx].stops.length; i++) {
-        await upsertMarker(dayIdx, i);
-        await new Promise(r => setTimeout(r, 220));
-      }
-    }
-
-    function renderTabs() {
-      tabsEl.innerHTML = "";
-      days.forEach((d, idx) => {
-        const btn = document.createElement("button");
-        btn.className = "tab" + (idx === currentDayIdx ? " active" : "");
-        btn.textContent = d.label;
-        btn.addEventListener("click", async () => {
-          if (idx === currentDayIdx) return;
-          // clear current markers
-          clearMapForDay(currentDayIdx);
-          currentDayIdx = idx;
-          renderTabs();
-          renderDay();
-          await geocodeAll(currentDayIdx);
-        });
-        tabsEl.appendChild(btn);
-      });
-    }
-
-    function renderDay() {
-      const d = days[currentDayIdx];
-      subtitleEl.textContent = `${d.label} 스팟 목록 (Query 수정 가능)`;
-      routeHintEl.innerHTML = `동선 힌트: <b>${d.route_hint}</b>`;
-      listEl.innerHTML = "";
-
-      d.stops.forEach((s, idx) => {
-        const div = document.createElement("div");
-        div.className = "item";
-        div.dataset.idx = idx;
-
-        const safe = (s.query || "").replace(/"/g, '&quot;');
-
-        div.innerHTML = `
-          <div class="time"><span class="emoji">${s.emoji || '📍'}</span><span>${s.time}</span></div>
-          <div>
-            <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;"><div class="name">${idx+1}. ${s.name}</div><button class="btn danger mini" id="del-${idx}" onclick="event.stopPropagation()">삭제</button></div>
-            <div class="queryRow" onclick="event.stopPropagation()">
-              <input class="qInput" id="q-${idx}" value="${safe}" />
-              <button class="btn primary" id="apply-${idx}">적용</button>
-            </div>
-            <div class="status" id="status-${idx}">자동 인식 중…</div>
-          </div>
-        `;
-        listEl.appendChild(div);
-      });
-
-      // card click => fly to marker
-      document.querySelectorAll(".item").forEach(el => {
-        el.addEventListener("click", () => {
-          const idx = parseInt(el.dataset.idx, 10);
-          const m = state[currentDayIdx].markersByStop[idx];
-          if (!m) return;
-          map.flyTo(m.getLatLng(), 15, { duration: 0.8 });
-          m.openPopup();
-        });
-      });
-
-      
-      // delete buttons
-      days[currentDayIdx].stops.forEach((s, i) => {
-        const del = document.getElementById(`del-${i}`);
-        if (!del) return;
-        del.addEventListener("click", (ev) => {
-          ev.stopPropagation();
-          removeStopForCurrentDay(i);
-        });
-      });
-
-// apply buttons
-      
-      // add-stop button
-      const addBtn = document.getElementById("addStopBtn");
-      if (addBtn) {
-        addBtn.onclick = () => addStopForCurrentDay();
-      }
-
-days[currentDayIdx].stops.forEach((s, i) => {
-        const btn = document.getElementById(`apply-${i}`);
-        const input = document.getElementById(`q-${i}`);
-        if (!btn || !input) return;
-
-        const apply = async () => {
-          const v = input.value.trim();
-          if (!v) return;
-          days[currentDayIdx].stops[i].query = v;
-          await upsertMarker(currentDayIdx, i);
-        };
-
-        btn.addEventListener("click", apply);
-        input.addEventListener("keydown", (ev) => {
-          if (ev.key === "Enter") apply();
-        });
-      });
-    }
-
-    
-    function ensureStateForDay(dayIdx) {
-      // sync state arrays with current stops length
-      const d = days[dayIdx];
-      const st = state[dayIdx];
-      const n = d.stops.length;
-      if (st.markersByStop.length !== n) {
-        // keep existing markers/coords, extend with nulls if needed
-        const newMarkers = new Array(n).fill(null);
-        const newCoords = new Array(n).fill(null);
-        for (let i=0; i<Math.min(n, st.markersByStop.length); i++) {
-          newMarkers[i] = st.markersByStop[i];
-          newCoords[i] = st.coordsByStop[i];
+      document.getElementById(`status-${idx}`).innerHTML = '<span class="statusDot">⏳</span><span>자동 인식 중...</span>';
+      try{
+        const r = await geocode(s.query);
+        if(r){
+          s.lat = r.lat; s.lng = r.lng; s.addr = r.display_name;
+        }else{
+          s.lat=null; s.lng=null; s.addr=null;
         }
-        st.markersByStop = newMarkers;
-        st.coordsByStop = newCoords;
+      }catch(e){
+        s.lat=null; s.lng=null; s.addr=null;
       }
+      saveState();
+      renderDetail();
     }
 
-    function addStopForCurrentDay() {
-      const d = days[currentDayIdx];
-      d.stops.push({
-        time: "—",
-        emoji: "📍",
-        name: "새 스팟",
-        query: "Shanghai"
+    // Emoji picker
+    buildEmojiPop(emojiPop, (e)=>{
+      emojiBtn.textContent = e;
+      emojiPop.classList.remove("open");
+      emojiPop.setAttribute("aria-hidden","true");
+      syncToState();
+      saveState();
+      renderDetail();
+    });
+    emojiBtn.addEventListener("click", (ev)=>{
+      ev.preventDefault();
+      const isOpen = emojiPop.classList.toggle("open");
+      emojiPop.setAttribute("aria-hidden", (!isOpen).toString());
+    });
+    document.addEventListener("click", (ev)=>{
+      if(!emojiPop.classList.contains("open")) return;
+      const t = ev.target;
+      if(t===emojiBtn || emojiPop.contains(t)) return;
+      emojiPop.classList.remove("open");
+      emojiPop.setAttribute("aria-hidden","true");
+    });
+
+    // Time inputs
+    const norm2 = (v)=> (v||"").replace(/\D/g,"").slice(0,2);
+    hhEl.addEventListener("input", ()=>{ hhEl.value = norm2(hhEl.value); if(hhEl.value.length===2) mmEl.focus(); });
+    mmEl.addEventListener("input", ()=>{ mmEl.value = norm2(mmEl.value); });
+
+    // Apply triggers
+    applyMini.addEventListener("click", (ev)=>{ ev.preventDefault(); apply(); });
+    qEl.addEventListener("keydown", (ev)=>{ if(ev.key==="Enter"){ ev.preventDefault(); apply(); } });
+    nEl.addEventListener("keydown", (ev)=>{ if(ev.key==="Enter"){ ev.preventDefault(); apply(); } });
+    hhEl.addEventListener("keydown", (ev)=>{ if(ev.key==="Enter"){ ev.preventDefault(); apply(); } });
+    mmEl.addEventListener("keydown", (ev)=>{ if(ev.key==="Enter"){ ev.preventDefault(); apply(); } });
+  });
+}
+
+
+/* Modals */
+function openNameModal(){
+  nameOverlay.classList.add("show");
+  nameInput.value = state.userName || "";
+  setTimeout(()=>nameInput.focus(),0);
+}
+function closeNameModal(){ nameOverlay.classList.remove("show"); }
+saveNameBtn.addEventListener("click", ()=>{
+  const v=nameInput.value.trim();
+  state.userName = v || "Me";
+  saveState();
+  setBrand();
+  closeNameModal();
+  renderHome();
+});
+
+let editingTripId=null;
+function setWithMode(mode){
+  if(mode==="with"){
+    withSomeone.classList.add("active"); withAlone.classList.remove("active");
+    withWhomInput.disabled=false;
+    state._modalWithMode="with";
+  }else{
+    withAlone.classList.add("active"); withSomeone.classList.remove("active");
+    withWhomInput.disabled=true;
+    withWhomInput.value="";
+    state._modalWithMode="alone";
+  }
+}
+function syncWhenInputs(){
+  const tbd=whenTbd.checked;
+  startDate.disabled=tbd;
+  endDate.disabled=tbd;
+  if(tbd){ startDate.value=""; endDate.value=""; }
+}
+withAlone.addEventListener("click", ()=>setWithMode("alone"));
+withSomeone.addEventListener("click", ()=>setWithMode("with"));
+whenTbd.addEventListener("change", syncWhenInputs);
+
+function resizeDaysForTrip(trip, startStr, endStr){
+  if(!startStr || !endStr) return;
+  const s=parseDate(startStr), e=parseDate(endStr);
+  if(!s || !e) return;
+  const n=daysBetween(s,e)+1;
+  if(n<=0) return;
+  const old=trip.days||[];
+  const next=[];
+  for(let i=0;i<n;i++){
+    if(i<old.length){ old[i].label=`Day ${i+1}`; next.push(old[i]); }
+    else next.push({id:uid(),label:`Day ${i+1}`,stops:[]});
+  }
+  trip.days=next;
+}
+
+function openTripModal(mode){
+  populateThemeSelect(document.getElementById('createTheme'), state.tmpTripThemeKey || THEME_PRESETS[0].key);
+
+  populateThemeSelect(document.getElementById('tripTheme'), state.tmpTripThemeKey || THEME_PRESETS[0].key);
+
+  tripOverlay.classList.add("show");
+  if(mode==="create"){
+    editingTripId=null;
+    tripModalTitle.textContent="여행 추가";
+    deleteTripBtn.style.display="none";
+    whereInput.value="";
+    colorSelect.value="Sky";
+    whenTbd.checked=true;
+    startDate.value=""; endDate.value="";
+    setWithMode("alone");
+  }else{
+    const trip=state.trips.find(t=>t.id===editingTripId);
+    if(!trip) return;
+    tripModalTitle.textContent="여행 편집";
+    deleteTripBtn.style.display="";
+    whereInput.value=trip.where||"";
+    colorSelect.value = trip.themeKey || "Sky";
+    const tbd=!(trip.startDate && trip.endDate);
+    whenTbd.checked=tbd;
+    startDate.value=trip.startDate||"";
+    endDate.value=trip.endDate||"";
+    setWithMode(trip.withMode||"alone");
+    withWhomInput.value=trip.withWhom||"";
+    syncWhenInputs();
+  }
+  syncWhenInputs();
+}
+function closeTripModalFn(){ tripOverlay.classList.remove("show"); }
+closeTripModal.addEventListener("click", closeTripModalFn);
+
+saveTripBtn.addEventListener("click", ()=>{
+  const where=whereInput.value.trim();
+  const withMode=(state._modalWithMode==="with")?"with":"alone";
+  const withWhom=(withMode==="with")?withWhomInput.value.trim():"";
+  const themeKey = colorSelect.value;
+  const preset = presetByKey(themeKey);
+let s=null,e=null;
+  if(!whenTbd.checked){
+    s=startDate.value; e=endDate.value;
+    if(s && e && s>e){ const tmp=s; s=e; e=tmp; }
+  }
+
+  if(editingTripId){
+    const trip=state.trips.find(t=>t.id===editingTripId);
+    if(!trip){ closeTripModalFn(); return; }
+    trip.where=where;
+    trip.withMode=withMode;
+    trip.withWhom=withWhom;
+    trip.themeKey = themeKey;
+    trip.color = preset.themeAccent;
+    trip.titleColor = preset.titleColor;
+    trip.queryBg = preset.queryBg;
+    trip.onAccent = preset.onAccent;
+    trip.startDate=s||null;
+    trip.endDate=e||null;
+    resizeDaysForTrip(trip, trip.startDate, trip.endDate);
+  }else{
+    const trip={ id:uid(), where, startDate:s||null, endDate:e||null, withMode, withWhom,
+      themeKey: themeKey, color: preset.themeAccent, titleColor: preset.titleColor, queryBg: preset.queryBg, onAccent: preset.onAccent,
+      days:[] };
+    if(trip.startDate && trip.endDate) resizeDaysForTrip(trip, trip.startDate, trip.endDate);
+    else trip.days=[{id:uid(),label:"Day 1",stops:[]},{id:uid(),label:"Day 2",stops:[]},{id:uid(),label:"Day 3",stops:[]}];
+    state.trips.unshift(trip);
+  }
+  saveState();
+  closeTripModalFn();
+  if(currentTripId) renderDetail(); else renderHome();
+});
+
+deleteTripBtn.addEventListener("click", ()=>{
+  if(!editingTripId) return;
+  state.trips = state.trips.filter(t=>t.id!==editingTripId);
+  saveState();
+  closeTripModalFn();
+  showHome();
+});
+
+/* Events */
+segCards.addEventListener("click", ()=>{ state.viewMode="cards"; saveState(); renderHome(); });
+segCal.addEventListener("click", ()=>{ state.viewMode="calendar"; saveState(); renderHome(); });
+addTripBtn.addEventListener("click", ()=>openTripModal("create"));
+backBtn.addEventListener("click", ()=>showHome());
+editTripBtn.addEventListener("click", ()=>{ editingTripId=currentTripId; openTripModal("edit"); });
+addStopBtn.addEventListener("click", ()=>{
+  const trip=state.trips.find(t=>t.id===currentTripId); if(!trip) return;
+  trip.days[currentDayIdx].stops.push({time:"",emoji:"📍",name:"",query:""});
+  saveState(); renderDetail();
+});
+yearBtn.addEventListener('click', openYearModal);
+
+/* Helpers */
+
+const EMOJIS = ["✈️","📍","📸","🛍️","🧋","🍜","🥟","🍲","☕","🍰","🛳️","🌉","🏙️","🧖‍♀️","💅","🧸","🎀","🩷","🩶","⭐","🧭","🚇","🚕","🏨","🛫","🛬","🌳","🏛️","🧁","🍸","🍹","🥂","🥢","🍢","🍖","🎡","🪩"];
+function buildEmojiPop(el, onPick){
+  el.innerHTML = EMOJIS.map(e=>`<button class="emojiOpt" type="button" data-e="${e}">${e}</button>`).join("");
+  el.querySelectorAll(".emojiOpt").forEach(btn=>{
+    btn.addEventListener("click",(ev)=>{
+      ev.preventDefault();
+      onPick(btn.getAttribute("data-e"));
+    });
+  });
+}
+
+
+  
+  
+  function darkenHex(hex, factor=0.55){
+    // factor: 0~1 smaller => darker
+    const h = String(hex||"").trim();
+    const m = h.match(/^#([0-9a-fA-F]{6})$/);
+    if(!m) return "#111827";
+    const n = parseInt(m[1],16);
+    let r = (n>>16)&255, g=(n>>8)&255, b=n&255;
+    r = Math.round(r*factor); g=Math.round(g*factor); b=Math.round(b*factor);
+    const out = (r<<16)|(g<<8)|b;
+    return "#"+out.toString(16).padStart(6,"0");
+  }
+
+function themeToTitleColor(hex){
+    const m = {
+      "#f7b08a":"#8a3b1f",
+      "#f6b08a":"#8a3b1f",
+      "#bfe7fb":"#0b4a6e",
+      "#cbeeff":"#0b4a6e",
+      "#f3d4e7":"#7a2f57",
+      "#d9d9d9":"#111827",
+      "#e5e7eb":"#111827"
+    };
+    if(!hex) return "#111827";
+    const key = String(hex).toLowerCase();
+    return m[key] || "#111827";
+  }
+
+function formatTripTitle(trip){
+    const who = (trip.withMode === "alone" || !trip.withWhom) ? "" : (", " + trip.withWhom);
+    const namePart = trip.name || "name";
+    const dest = trip.where || trip.destination || "Somewhere";
+    return `${namePart}${who} in ${dest}`;
+  }
+
+function escapeHtml(s){ return String(s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;"); }
+function escapeAttr(s){ return escapeHtml(s).replaceAll('"',"&quot;"); }
+
+/* Boot */
+function boot(){
+  document.body.classList.add('home-mode');
+  if(!state.userName) openNameModal();
+  setBrand();
+  if(state.viewMode!=="calendar") state.viewMode="cards";
+  renderHome();
+}
+boot();
+
+  // Year modal
+  
+  function setCalendarYear(y){
+  state.calendarYear = Number(y);
+  saveState();
+  renderCalendar();
+}
+
+function openYearModal(){
+    const modal = document.getElementById("yearModal");
+    const grid = document.getElementById("yearGrid");
+    const cur = (state.calendarYear ?? new Date().getFullYear());
+    const years = [];
+    for(let y=2020; y<=2030; y++) years.push(y);
+    grid.innerHTML = years.map(y=>`<button class="yearBtn ${y===cur?'active':''}" data-y="${y}" type="button">${y}</button>`).join("");
+    grid.querySelectorAll(".yearBtn").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const y = parseInt(btn.getAttribute("data-y"),10);
+        state.calendarYear = y;
+        saveState();
+        closeYearModal();
+        render();
       });
-      ensureStateForDay(currentDayIdx);
-      renderDay();
-      const newIdx = d.stops.length - 1;
-      upsertMarker(currentDayIdx, newIdx);
-      listEl.scrollTop = listEl.scrollHeight;
-    }
-    function removeStopForCurrentDay(idx) {
-      const d = days[currentDayIdx];
-      if (idx < 0 || idx >= d.stops.length) return;
+    });
+    modal.style.display = "flex";
+    modal.setAttribute("aria-hidden","false");
+  }
+  function closeYearModal(){
+    const modal = document.getElementById("yearModal");
+    modal.style.display = "none";
+    modal.setAttribute("aria-hidden","true");
+  }
+  document.addEventListener("click", (ev)=>{
+    const modal = document.getElementById("yearModal");
+    if(modal && modal.style.display==="flex" && ev.target===modal){ closeYearModal(); }
+  });
+  const yearModalEl = document.getElementById("yearModal");
+  const yearModalCloseBtn = document.getElementById("yearModalClose");
+  if(yearModalCloseBtn) yearModalCloseBtn.addEventListener("click", closeYearModal);
+  if(yearModalEl) yearModalEl.addEventListener("click",(e)=>{ if(e.target===yearModalEl) closeYearModal(); });
 
-      // remove marker if exists
-      const st = state[currentDayIdx];
-      const m = st.markersByStop[idx];
-      if (m) {
-        m.remove();
+
+  // Robust delete handler (capture phase to beat card navigation)
+  (function(){
+    function handleDel(ev){
+      const btn = ev.target && ev.target.closest ? ev.target.closest(".tripDelBtn") : null;
+      if(!btn) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+      const id = btn.getAttribute("data-del");
+      if(!id) return;
+      if(confirm("이 여행 프로젝트를 삭제할까?")){
+        state.trips = (state.trips||[]).filter(t => String(t.id)!==String(id));
+        if(currentTripId && String(currentTripId)===String(id)){ currentTripId=null; }
+        saveState();
+        render();
       }
-
-      // splice data
-      d.stops.splice(idx, 1);
-
-      // clear and rebuild state for this day (indices changed)
-      clearMapForDay(currentDayIdx);
-      ensureStateForDay(currentDayIdx);
-
-      // re-render + re-geocode everything to redraw markers/line with new numbering
-      renderDay();
-      geocodeAll(currentDayIdx);
     }
+    document.addEventListener("pointerdown", handleDel, true);
+    document.addEventListener("pointerup", handleDel, true);
+    document.addEventListener("mousedown", handleDel, true);
+    document.addEventListener("mouseup", handleDel, true);
+    document.addEventListener("click", handleDel, true);
+  })();
 
+</script>
 
-
-(async () => {
-      renderTabs();
-      renderDay();
-      await geocodeAll(currentDayIdx);
-    })();
-  </script>
+  <div class="modalOverlay" id="yearModal" aria-hidden="true" style="display:none;">
+    <div class="modalCard" role="dialog" aria-modal="true" aria-label="연도 선택">
+      <div class="modalHead">
+        <div class="modalTitle">연도 선택</div>
+        <button class="modalClose" id="yearModalClose" type="button">✕</button>
+      </div>
+      <div class="yearGrid" id="yearGrid"></div>
+    </div>
+  </div>
 
 </body>
 </html>
