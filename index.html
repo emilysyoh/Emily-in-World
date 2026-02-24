@@ -16,7 +16,7 @@
 
   
   <!-- Kakao Maps SDK (geocoding) -->
-  <script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=4ae853f102b820af7de91ec5fd91143a&libraries=services"></script>
+  <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=4ae853f102b820af7de91ec5fd91143a&libraries=services"></script>
 <style>
     html, body, input, button, textarea, select { 
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", Arial, sans-serif;
@@ -567,36 +567,150 @@ let currentTripId=null;
 let currentDayIdx=0;
 
 /* Map */
-let map, polyline;
-let markers = []; // {marker, tripId, dayIdx, stopIdx}
+let mapEngine = null; // "kakao" | "leaflet"
+let map = null;
+
+// Kakao
+let kakaoPolyline = null;
+
+// Leaflet
+let leafletMap = null;
+let leafletMarkersLayer = null;
+let leafletPolyline = null;
+
+let markers = []; // unified marker records; engine-specific instances stored inside
+
+function showMapError(msg){
+  const el = document.getElementById("map");
+  if(!el) return;
+  // don't overwrite if map already rendered
+  if(el.dataset.hasError === "1") return;
+  el.dataset.hasError = "1";
+  const banner = document.createElement("div");
+  banner.style.position = "absolute";
+  banner.style.inset = "16px";
+  banner.style.zIndex = "999";
+  banner.style.display = "flex";
+  banner.style.alignItems = "center";
+  banner.style.justifyContent = "center";
+  banner.style.textAlign = "center";
+  banner.style.padding = "14px 16px";
+  banner.style.borderRadius = "16px";
+  banner.style.border = "1px solid rgba(0,0,0,.12)";
+  banner.style.background = "rgba(255,255,255,.86)";
+  banner.style.boxShadow = "0 8px 22px rgba(17,24,39,.10)";
+  banner.style.color = "rgba(17,24,39,.85)";
+  banner.style.fontWeight = "700";
+  banner.innerHTML = msg;
+  el.appendChild(banner);
+}
 
 function ensureMap(){
-  if(map) return;
+  if(mapEngine) return;
+
   const container = document.getElementById("map");
-  // default center: Shanghai (kept from previous)
-  const options = {
-    center: new kakao.maps.LatLng(31.2304, 121.4737),
-    level: 6
-  };
-  map = new kakao.maps.Map(container, options);
-  polyline = new kakao.maps.Polyline({
-    path: [],
-    strokeWeight: 4,
-    strokeOpacity: 0.85
-  });
-  polyline.setMap(map);
+  if(!container) return;
+
+  // Try Kakao first
+  if(window.kakao && window.kakao.maps && typeof window.kakao.maps.Map === "function"){
+    try{
+      const options = { center: new window.kakao.maps.LatLng(31.2304, 121.4737), level: 6 };
+      map = new window.kakao.maps.Map(container, options);
+      kakaoPolyline = new window.kakao.maps.Polyline({ path: [], strokeWeight: 4, strokeOpacity: 0.85 });
+      kakaoPolyline.setMap(map);
+      mapEngine = "kakao";
+      return;
+    }catch(e){
+      // fall through to Leaflet
+    }
+  }
+
+  // Leaflet fallback (works on file:// and without Kakao domain registration)
+  try{
+    leafletMap = L.map(container, { zoomControl: true, attributionControl: true })
+      .setView([31.2304, 121.4737], 12);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "&copy; OpenStreetMap"
+    }).addTo(leafletMap);
+
+    leafletMarkersLayer = L.layerGroup().addTo(leafletMap);
+    leafletPolyline = L.polyline([], { weight: 4, opacity: 0.85 }).addTo(leafletMap);
+
+    mapEngine = "leaflet";
+    map = leafletMap;
+
+    // Explain why Kakao didn't load (most common causes)
+    showMapError(
+      `카카오 지도 로딩이 안 돼서 OpenStreetMap(대체 지도)로 표시 중이다.<br/>
+       • GitHub Pages라면: Kakao Developers에서 Web 도메인 등록 필요<br/>
+       • 로컬(file://)로 열면: 카카오 지도는 차단될 수 있음`
+    );
+  }catch(e){
+    mapEngine = "none";
+    showMapError("지도 로딩 실패 — 콘솔 오류 확인 필요");
+  }
 }
+
 function makeEmojiIcon(emoji){
   const html = `<div class="emojiBadge">${emoji||"📍"}</div>`;
   return L.divIcon({ html, className:"", iconSize:[34,34], iconAnchor:[17,17] });
 }
 
-function makeEmojiOverlay(emoji){
+function makeEmojiOverlayEl(emoji){
   const el = document.createElement("div");
   el.className = "emojiBadge";
   el.textContent = emoji || "📍";
   return el;
 }
+
+function clearMapForTrip(){
+  if(!mapEngine) return;
+  if(mapEngine === "kakao"){
+    markers.forEach(m=>{
+      if(m.overlay) m.overlay.setMap(null);
+      if(m.info) m.info.close();
+    });
+    markers = [];
+    if(kakaoPolyline) kakaoPolyline.setPath([]);
+  }else if(mapEngine === "leaflet"){
+    if(leafletMarkersLayer) leafletMarkersLayer.clearLayers();
+    markers = [];
+    if(leafletPolyline) leafletPolyline.setLatLngs([]);
+  }
+}
+
+function redrawPolyline(trip, dayIdx){
+  if(!mapEngine) return;
+  const pts = markers
+    .filter(m=>m.tripId===trip.id && m.dayIdx===dayIdx)
+    .sort((a,b)=>a.stopIdx-b.stopIdx);
+
+  if(mapEngine === "kakao"){
+    const path = pts.map(m=>m.pos);
+    kakaoPolyline && kakaoPolyline.setPath(path);
+  }else if(mapEngine === "leaflet"){
+    const path = pts.map(m=>[m.lat, m.lng]);
+    leafletPolyline && leafletPolyline.setLatLngs(path);
+  }
+}
+
+function fitToMarkers(trip, dayIdx){
+  if(!mapEngine) return;
+  const pts = markers.filter(m=>m.tripId===trip.id && m.dayIdx===dayIdx);
+  if(!pts.length) return;
+
+  if(mapEngine === "kakao"){
+    const bounds = new window.kakao.maps.LatLngBounds();
+    pts.forEach(m=>bounds.extend(m.pos));
+    map.setBounds(bounds);
+  }else if(mapEngine === "leaflet"){
+    const latlngs = pts.map(m=>[m.lat, m.lng]);
+    leafletMap && leafletMap.fitBounds(latlngs, { padding:[30,30] });
+  }
+}
+
+
 async function geocode(query){
   const q0 = String(query||"").trim();
   if(!q0) return null;
@@ -616,15 +730,15 @@ async function geocode(query){
 
   // 1) Kakao (addressSearch -> keywordSearch) with variants
   try{
-    if(window.kakao && kakao.maps && kakao.maps.services){
-      const geocoder = new kakao.maps.services.Geocoder();
-      const places = new kakao.maps.services.Places();
+    if(window.kakao && window.kakao.maps && window.kakao.maps.services){
+      const geocoder = new window.kakao.maps.services.Geocoder();
+      const places = new window.kakao.maps.services.Places();
 
       // addressSearch attempts
       for(const v of variants){
         const r1 = await new Promise((resolve)=>{
           geocoder.addressSearch(v, (result, status)=>{
-            if(status === kakao.maps.services.Status.OK && result && result.length){
+            if(status === window.kakao.maps.services.Status.OK && result && result.length){
               const top = result[0];
               resolve({ lat: parseFloat(top.y), lng: parseFloat(top.x), display: top.address_name || v, source:"kakao_address" });
             }else{
@@ -639,7 +753,7 @@ async function geocode(query){
       for(const v of variants){
         const r2 = await new Promise((resolve)=>{
           places.keywordSearch(v, (data, status)=>{
-            if(status === kakao.maps.services.Status.OK && data && data.length){
+            if(status === window.kakao.maps.services.Status.OK && data && data.length){
               const top = data[0];
               resolve({ lat: parseFloat(top.y), lng: parseFloat(top.x), display: top.place_name || v, source:"kakao_keyword" });
             }else{
@@ -682,7 +796,7 @@ function redrawPolyline(trip, dayIdx){
 function fitToMarkers(trip, dayIdx){
   const pts = markers.filter(m=>m.tripId===trip.id && m.dayIdx===dayIdx).map(m=>m.pos);
   if(!pts.length) return;
-  const bounds = new kakao.maps.LatLngBounds();
+  const bounds = new window.kakao.maps.LatLngBounds();
   pts.forEach(p=>bounds.extend(p));
   map.setBounds(bounds);
 }
@@ -811,34 +925,38 @@ function rebuildMarkersFromState(trip){
   ensureMap();
   clearMapForTrip();
   const stops = trip.days[currentDayIdx].stops;
+
   stops.forEach((s,i)=>{
     if(s.lat && s.lng){
-      const pos = new kakao.maps.LatLng(s.lat, s.lng);
+      if(mapEngine === "kakao"){
+        const pos = new window.kakao.maps.LatLng(s.lat, s.lng);
+        const contentEl = makeEmojiOverlayEl(s.emoji);
+        const overlay = new window.kakao.maps.CustomOverlay({ position: pos, content: contentEl, yAnchor: 0.5 });
+        overlay.setMap(map);
 
-      const contentEl = makeEmojiOverlay(s.emoji);
-      const overlay = new kakao.maps.CustomOverlay({
-        position: pos,
-        content: contentEl,
-        yAnchor: 0.5
-      });
-      overlay.setMap(map);
+        const info = new window.kakao.maps.InfoWindow({
+          position: pos,
+          content: `<div style="padding:10px 12px;line-height:1.35;"><b>${escapeHtml(s.emoji||"📍")} ${escapeHtml(s.name||"Spot")}</b><br/>${escapeHtml(s.query||"")}</div>`
+        });
 
-      const info = new kakao.maps.InfoWindow({
-        position: pos,
-        content: `<div style="padding:10px 12px;line-height:1.35;"><b>${escapeHtml(s.emoji||"📍")} ${escapeHtml(s.name||"Spot")}</b><br/>${escapeHtml(s.query||"")}</div>`
-      });
+        contentEl.addEventListener("click", ()=>{
+          map.panTo(pos);
+          info.open(map);
+        });
 
-      contentEl.addEventListener("click", ()=>{
-        map.panTo(pos);
-        info.open(map);
-      });
-
-      markers.push({overlay, info, pos, tripId:trip.id, dayIdx:currentDayIdx, stopIdx:i});
+        markers.push({ overlay, info, pos, lat:s.lat, lng:s.lng, tripId:trip.id, dayIdx:currentDayIdx, stopIdx:i });
+      }else if(mapEngine === "leaflet"){
+        const marker = L.marker([s.lat, s.lng], { icon: makeEmojiIcon(s.emoji) }).addTo(leafletMarkersLayer);
+        marker.on("click", ()=>{
+          marker.bindPopup(`<b>${escapeHtml(s.emoji||"📍")} ${escapeHtml(s.name||"Spot")}</b><br/>${escapeHtml(s.query||"")}`).openPopup();
+        });
+        markers.push({ marker, lat:s.lat, lng:s.lng, tripId:trip.id, dayIdx:currentDayIdx, stopIdx:i });
+      }
     }else if(s.query){
-      // async geocode; will trigger renderDetail() on completion
       upsertMarkerForStop(trip,currentDayIdx,i);
     }
   });
+
   redrawPolyline(trip,currentDayIdx);
   fitToMarkers(trip,currentDayIdx);
 }
@@ -873,7 +991,7 @@ function renderDetail(){
   renderStops(trip);
 
   ensureMap();
-  setTimeout(()=>{ try{ map && map.invalidateSize(); }catch(e){} }, 0);
+  setTimeout(()=>{ try{ if(mapEngine==='leaflet' && leafletMap){ leafletMap.invalidateSize(); } }catch(e){} }, 0);
 
   // rebuild markers every time (ensures reorder keeps correct stopIdx)
   rebuildMarkersFromState(trip);
