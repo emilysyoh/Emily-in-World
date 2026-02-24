@@ -572,75 +572,119 @@ let markers = []; // {marker, tripId, dayIdx, stopIdx}
 
 function ensureMap(){
   if(map) return;
-  map = L.map("map").setView([31.2304, 121.4737], 12);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom:19, attribution:"&copy; OpenStreetMap" }).addTo(map);
-  polyline = L.polyline([], { weight:4, opacity:0.85 }).addTo(map);
+  const container = document.getElementById("map");
+  // default center: Shanghai (kept from previous)
+  const options = {
+    center: new kakao.maps.LatLng(31.2304, 121.4737),
+    level: 6
+  };
+  map = new kakao.maps.Map(container, options);
+  polyline = new kakao.maps.Polyline({
+    path: [],
+    strokeWeight: 4,
+    strokeOpacity: 0.85
+  });
+  polyline.setMap(map);
 }
 function makeEmojiIcon(emoji){
   const html = `<div class="emojiBadge">${emoji||"📍"}</div>`;
   return L.divIcon({ html, className:"", iconSize:[34,34], iconAnchor:[17,17] });
 }
-async function geocode(query){
-  const q = String(query||"").trim();
-  if(!q) return null;
 
-  // 1) Kakao (addressSearch -> keywordSearch)
+function makeEmojiOverlay(emoji){
+  const el = document.createElement("div");
+  el.className = "emojiBadge";
+  el.textContent = emoji || "📍";
+  return el;
+}
+async function geocode(query){
+  const q0 = String(query||"").trim();
+  if(!q0) return null;
+
+  // Helper: build query variants (no country restriction)
+  const variants = [];
+  const pushV = (v)=>{ v=String(v||"").trim(); if(v && !variants.includes(v)) variants.push(v); };
+  pushV(q0);
+  pushV("대한민국 " + q0);
+
+  // Heuristic: some KR addresses work better with province prefix
+  // (kept minimal; you can expand if needed)
+  if(/남해군/.test(q0) && !/(경상남도|경남)/.test(q0)){
+    pushV("경상남도 " + q0);
+    pushV("경남 " + q0);
+  }
+
+  // 1) Kakao (addressSearch -> keywordSearch) with variants
   try{
     if(window.kakao && kakao.maps && kakao.maps.services){
       const geocoder = new kakao.maps.services.Geocoder();
-
-      const r1 = await new Promise((resolve)=>{
-        geocoder.addressSearch(q, (result, status)=>{
-          if(status === kakao.maps.services.Status.OK && result && result.length){
-            const top = result[0];
-            resolve({ lat: parseFloat(top.y), lng: parseFloat(top.x), display: top.address_name || q, source:"kakao_address" });
-          }else{
-            resolve(null);
-          }
-        });
-      });
-      if(r1) return r1;
-
-      // keyword search (place name)
       const places = new kakao.maps.services.Places();
-      const r2 = await new Promise((resolve)=>{
-        places.keywordSearch(q, (data, status)=>{
-          if(status === kakao.maps.services.Status.OK && data && data.length){
-            const top = data[0];
-            resolve({ lat: parseFloat(top.y), lng: parseFloat(top.x), display: top.place_name || q, source:"kakao_keyword" });
-          }else{
-            resolve(null);
-          }
+
+      // addressSearch attempts
+      for(const v of variants){
+        const r1 = await new Promise((resolve)=>{
+          geocoder.addressSearch(v, (result, status)=>{
+            if(status === kakao.maps.services.Status.OK && result && result.length){
+              const top = result[0];
+              resolve({ lat: parseFloat(top.y), lng: parseFloat(top.x), display: top.address_name || v, source:"kakao_address" });
+            }else{
+              resolve(null);
+            }
+          });
         });
-      });
-      if(r2) return r2;
+        if(r1) return r1;
+      }
+
+      // keywordSearch attempts (place name / ambiguous addresses)
+      for(const v of variants){
+        const r2 = await new Promise((resolve)=>{
+          places.keywordSearch(v, (data, status)=>{
+            if(status === kakao.maps.services.Status.OK && data && data.length){
+              const top = data[0];
+              resolve({ lat: parseFloat(top.y), lng: parseFloat(top.x), display: top.place_name || v, source:"kakao_keyword" });
+            }else{
+              resolve(null);
+            }
+          });
+        });
+        if(r2) return r2;
+      }
     }
   }catch(e){
     // fall through to Nominatim
   }
 
-  // 2) Nominatim (OSM)
-  const url = "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" + encodeURIComponent(q);
+  // 2) Nominatim (OSM) fallback
+  const url = "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" + encodeURIComponent(q0);
   const res = await fetch(url, { headers: { "Accept-Language":"ko-KR,ko,en" } });
   if(!res.ok) throw new Error("geocode failed");
   const data = await res.json();
   if(!data || !data.length) return null;
-  return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon), display: data[0].display_name, source:"nominatim" };
+  return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon), display: data[0].display_name || q0, source:"nominatim" };
 }
 function clearMapForTrip(){
   if(!map) return;
-  markers.forEach(m=>map.removeLayer(m.marker));
+  markers.forEach(m=>{
+    if(m.overlay) m.overlay.setMap(null);
+    if(m.info) m.info.close();
+  });
   markers=[];
-  polyline.setLatLngs([]);
+  if(polyline) polyline.setPath([]);
 }
 function redrawPolyline(trip, dayIdx){
-  const pts = markers.filter(m=>m.tripId===trip.id && m.dayIdx===dayIdx).sort((a,b)=>a.stopIdx-b.stopIdx).map(m=>m.marker.getLatLng());
-  polyline.setLatLngs(pts);
+  if(!polyline) return;
+  const pts = markers
+    .filter(m=>m.tripId===trip.id && m.dayIdx===dayIdx)
+    .sort((a,b)=>a.stopIdx-b.stopIdx)
+    .map(m=>m.pos);
+  polyline.setPath(pts);
 }
 function fitToMarkers(trip, dayIdx){
-  const pts = markers.filter(m=>m.tripId===trip.id && m.dayIdx===dayIdx).map(m=>m.marker.getLatLng());
+  const pts = markers.filter(m=>m.tripId===trip.id && m.dayIdx===dayIdx).map(m=>m.pos);
   if(!pts.length) return;
-  map.fitBounds(L.latLngBounds(pts).pad(0.25));
+  const bounds = new kakao.maps.LatLngBounds();
+  pts.forEach(p=>bounds.extend(p));
+  map.setBounds(bounds);
 }
 
 /* IMPORTANT: markers' stopIdx must follow day.stops order.
@@ -769,10 +813,27 @@ function rebuildMarkersFromState(trip){
   const stops = trip.days[currentDayIdx].stops;
   stops.forEach((s,i)=>{
     if(s.lat && s.lng){
-      const marker=L.marker([s.lat,s.lng],{icon:makeEmojiIcon(s.emoji)}).addTo(map);
-      marker.on("click", ()=>map.setView([s.lat,s.lng],16,{animate:true}));
-      marker.bindPopup(`<b>${escapeHtml(s.emoji||"📍")} ${escapeHtml(s.name||"Spot")}</b><br/>${escapeHtml(s.query||"")}`);
-      markers.push({marker,tripId:trip.id,dayIdx:currentDayIdx,stopIdx:i});
+      const pos = new kakao.maps.LatLng(s.lat, s.lng);
+
+      const contentEl = makeEmojiOverlay(s.emoji);
+      const overlay = new kakao.maps.CustomOverlay({
+        position: pos,
+        content: contentEl,
+        yAnchor: 0.5
+      });
+      overlay.setMap(map);
+
+      const info = new kakao.maps.InfoWindow({
+        position: pos,
+        content: `<div style="padding:10px 12px;line-height:1.35;"><b>${escapeHtml(s.emoji||"📍")} ${escapeHtml(s.name||"Spot")}</b><br/>${escapeHtml(s.query||"")}</div>`
+      });
+
+      contentEl.addEventListener("click", ()=>{
+        map.panTo(pos);
+        info.open(map);
+      });
+
+      markers.push({overlay, info, pos, tripId:trip.id, dayIdx:currentDayIdx, stopIdx:i});
     }else if(s.query){
       // async geocode; will trigger renderDetail() on completion
       upsertMarkerForStop(trip,currentDayIdx,i);
