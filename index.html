@@ -715,17 +715,40 @@ async function geocode(query){
   const q0 = String(query||"").trim();
   if(!q0) return null;
 
+  // Basic KR address normalization to improve hit-rate for rural/road-name inputs.
+  // Examples: "남해대로495번길" -> "남해대로 495번길", "번길14" -> "번길 14"
+  const normalizeKR = (s)=>{
+    let t = String(s||"");
+    t = t.replace(/[\u200B-\u200D\uFEFF]/g, ""); // zero-width
+    t = t.replace(/\s+/g, " ").trim();
+    // Add space between road suffix and digits
+    t = t.replace(/(대로|로|길)(?=\d)/g, "$1 ");
+    // Add space between (번길/길) and building number when glued
+    t = t.replace(/(번길|길)(?=\d)/g, "$1 ");
+    // Remove stray commas
+    t = t.replace(/\s*,\s*/g, " ");
+    t = t.replace(/\s+/g, " ").trim();
+    return t;
+  };
+  const qNorm = normalizeKR(q0);
+
   // Helper: build query variants (no country restriction)
   const variants = [];
   const pushV = (v)=>{ v=String(v||"").trim(); if(v && !variants.includes(v)) variants.push(v); };
   pushV(q0);
+  if(qNorm !== q0) pushV(qNorm);
   pushV("대한민국 " + q0);
+  if(qNorm !== q0) pushV("대한민국 " + qNorm);
 
   // Heuristic: some KR addresses work better with province prefix
   // (kept minimal; you can expand if needed)
   if(/남해군/.test(q0) && !/(경상남도|경남)/.test(q0)){
     pushV("경상남도 " + q0);
     pushV("경남 " + q0);
+    if(qNorm !== q0){
+      pushV("경상남도 " + qNorm);
+      pushV("경남 " + qNorm);
+    }
   }
 
   // 1) Kakao (addressSearch -> keywordSearch) with variants
@@ -775,30 +798,6 @@ async function geocode(query){
   const data = await res.json();
   if(!data || !data.length) return null;
   return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon), display: data[0].display_name || q0, source:"nominatim" };
-}
-function clearMapForTrip(){
-  if(!map) return;
-  markers.forEach(m=>{
-    if(m.overlay) m.overlay.setMap(null);
-    if(m.info) m.info.close();
-  });
-  markers=[];
-  if(polyline) polyline.setPath([]);
-}
-function redrawPolyline(trip, dayIdx){
-  if(!polyline) return;
-  const pts = markers
-    .filter(m=>m.tripId===trip.id && m.dayIdx===dayIdx)
-    .sort((a,b)=>a.stopIdx-b.stopIdx)
-    .map(m=>m.pos);
-  polyline.setPath(pts);
-}
-function fitToMarkers(trip, dayIdx){
-  const pts = markers.filter(m=>m.tripId===trip.id && m.dayIdx===dayIdx).map(m=>m.pos);
-  if(!pts.length) return;
-  const bounds = new window.kakao.maps.LatLngBounds();
-  pts.forEach(p=>bounds.extend(p));
-  map.setBounds(bounds);
 }
 
 /* IMPORTANT: markers' stopIdx must follow day.stops order.
@@ -991,7 +990,7 @@ function renderDetail(){
   renderStops(trip);
 
   ensureMap();
-  setTimeout(()=>{ try{ if(mapEngine==='leaflet' && leafletMap){ leafletMap.invalidateSize(); } }catch(e){} }, 0);
+  setTimeout(()=>{ try{ if(mapEngine==='leaflet' && leafletMap){ leafletMap.invalidateSize(); } if(mapEngine==='kakao' && map && typeof map.relayout==='function'){ map.relayout(); } }catch(e){} }, 0);
 
   // rebuild markers every time (ensures reorder keeps correct stopIdx)
   rebuildMarkersFromState(trip);
