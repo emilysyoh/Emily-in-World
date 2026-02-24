@@ -14,7 +14,10 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 
-  <style>
+  
+  <!-- Kakao Maps SDK (geocoding) -->
+  <script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=4ae853f102b820af7de91ec5fd91143a&libraries=services"></script>
+<style>
     html, body, input, button, textarea, select { 
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", Arial, sans-serif;
       font-weight: 500;
@@ -578,12 +581,51 @@ function makeEmojiIcon(emoji){
   return L.divIcon({ html, className:"", iconSize:[34,34], iconAnchor:[17,17] });
 }
 async function geocode(query){
-  const url = "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" + encodeURIComponent(query);
-  const res = await fetch(url, { headers: { "Accept-Language":"en" } });
+  const q = String(query||"").trim();
+  if(!q) return null;
+
+  // 1) Kakao (addressSearch -> keywordSearch)
+  try{
+    if(window.kakao && kakao.maps && kakao.maps.services){
+      const geocoder = new kakao.maps.services.Geocoder();
+
+      const r1 = await new Promise((resolve)=>{
+        geocoder.addressSearch(q, (result, status)=>{
+          if(status === kakao.maps.services.Status.OK && result && result.length){
+            const top = result[0];
+            resolve({ lat: parseFloat(top.y), lng: parseFloat(top.x), display: top.address_name || q, source:"kakao_address" });
+          }else{
+            resolve(null);
+          }
+        });
+      });
+      if(r1) return r1;
+
+      // keyword search (place name)
+      const places = new kakao.maps.services.Places();
+      const r2 = await new Promise((resolve)=>{
+        places.keywordSearch(q, (data, status)=>{
+          if(status === kakao.maps.services.Status.OK && data && data.length){
+            const top = data[0];
+            resolve({ lat: parseFloat(top.y), lng: parseFloat(top.x), display: top.place_name || q, source:"kakao_keyword" });
+          }else{
+            resolve(null);
+          }
+        });
+      });
+      if(r2) return r2;
+    }
+  }catch(e){
+    // fall through to Nominatim
+  }
+
+  // 2) Nominatim (OSM)
+  const url = "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" + encodeURIComponent(q);
+  const res = await fetch(url, { headers: { "Accept-Language":"ko-KR,ko,en" } });
   if(!res.ok) throw new Error("geocode failed");
   const data = await res.json();
   if(!data || !data.length) return null;
-  return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon), display: data[0].display_name };
+  return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon), display: data[0].display_name, source:"nominatim" };
 }
 function clearMapForTrip(){
   if(!map) return;
@@ -1137,7 +1179,7 @@ document.addEventListener("click", (ev)=>{
     if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
     const id = btn.getAttribute("data-del");
     if(!id) return;
-    if(confirm("이 여행 프로젝트를 삭제할까요?")){
+    if(confirm("이 여행 프로젝트를 삭제할까?")){
       state.trips = (state.trips||[]).filter(t => String(t.id)!==String(id));
       if(currentTripId && String(currentTripId)===String(id)){ currentTripId=null; }
       saveState();
