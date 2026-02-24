@@ -4,25 +4,17 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>{name}-in-World</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Paytone+One&display=swap" rel="stylesheet">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@700&display=swap" rel="stylesheet">
-
-  <!-- Cute fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Paytone+One&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Jua&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
-
 
   <!-- Leaflet (map) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 
   <style>
-
     html, body, input, button, textarea, select { 
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", Arial, sans-serif;
       font-weight: 500;
@@ -52,17 +44,31 @@
       --emojiBg:#e5e7eb; /* opaque light gray */
     }
     *{box-sizing:border-box}
-    body{margin:0;font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", Arial, sans-serif;color:var(--ink);background: var(--homeBg);}
+    body{margin:0;color:var(--ink);background: var(--homeBg);}
     body.home-mode{background: var(--homeBg);}
     body.detail-mode{background: var(--detailBg);}
     .app{max-width: 100%;margin:0 auto;padding:28px 20px 40px;}
     .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;}
     .brand{font-size:40px;font-weight:600;letter-spacing:-0.02em;}
+    /* Brand with logo (logo on the right) */
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      white-space:nowrap;
+    }
+    #brandLogo{
+      height:28px;
+      width:auto;
+      display:block;
+      border-radius:6px;
+    }
+
     .actions{display:flex;gap:10px;align-items:center;}
-    .btn{border:1px solid var(--line);background:var(--homeControl);padding:12px 14px;border-radius:14px;font-weight:600;cursor:pointer;box-shadow:none;}
-    .btn.primary{background:var(--homeAccentStrong);color:var(--ink);border-color:rgba(0,0,0,.06);} body.detail-mode .btn.primary{background:var(--detailAccent);color:var(--ink);}
-    body.detail-mode .btn.primary{background:var(--homeAccentStrong);color:var(--ink);border-color:rgba(0,0,0,.06);} body.detail-mode .btn.primary{background:var(--detailAccent);color:var(--ink);}
-    .btn.ghost{background:transparent;box-shadow:none;}
+    .btn{border:1px solid var(--line);background:var(--homeControl);padding:12px 14px;border-radius:14px;font-weight:600;cursor:pointer;}
+    .btn.primary{background:var(--homeAccentStrong);color:var(--ink);border-color:rgba(0,0,0,.06);}
+    body.detail-mode .btn.primary{background:var(--detailAccent);color:var(--ink);}
+    .btn.ghost{background:transparent;}
     .btn.small{padding:10px 12px;border-radius:12px;font-weight:600;}
     .seg{display:flex;background:var(--homeAccent);border:1px solid var(--line);border-radius:999px;padding:4px;gap:4px;}
     .seg button{border:0;background:transparent;padding:10px 14px;border-radius:999px;font-weight:600;cursor:pointer;color:var(--muted);}
@@ -71,24 +77,23 @@
     .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:18px;}
     @media (max-width:980px){.grid{grid-template-columns:repeat(2,minmax(0,1fr));}.brand{font-size:34px;}}
     @media (max-width:640px){.grid{grid-template-columns:1fr;}.brand{font-size:30px;}.app{padding:18px 14px 28px;}}
-    .tripCard{border:1px solid var(--line);border-radius:22px;padding:18px;background:var(--homeCard);box-shadow:none;cursor:pointer;position:relative;overflow:hidden;min-height:150px;}
+    .tripCard{border:1px solid var(--line);border-radius:22px;padding:18px;background:var(--homeCard);cursor:pointer;position:relative;overflow:hidden;min-height:150px;}
     .tripCard::before{content:"";position:absolute;inset:0;background:var(--accent,#f5f5f5);opacity:.22;pointer-events:none;}
     .tripTitle{position:relative;font-size:22px;font-weight:700;letter-spacing:-0.02em;margin:0 0 10px 0;line-height:1.15;}
-    .tripMeta{position:relative;color:var(--muted);font-weight:700;font-size:14px;}
     .tripDates{margin-top:8px;font-weight:700;color:var(--ink);letter-spacing:0.01em;}
-    .tripPlus{display:flex;align-items:center;justify-content:center;font-size:44px;font-weight:700;background:transparent;border:2px dashed var(--line);box-shadow:none;}
+    .tripPlus{display:flex;align-items:center;justify-content:center;font-size:44px;font-weight:700;background:transparent;border:2px dashed var(--line);}
 
     .calendarBar{display:flex;align-items:center;justify-content:space-between;margin-top:8px;gap:10px;}
-    .yearBtn{border:1px solid var(--line);background:var(--homeAccent);padding:12px 16px;border-radius:16px;font-weight:700;cursor:pointer;box-shadow:none;min-width:150px;text-align:center;}
+    .yearBtn{border:1px solid var(--line);background:var(--homeAccent);padding:12px 16px;border-radius:16px;font-weight:700;cursor:pointer;min-width:150px;text-align:center;}
     .months{margin-top:14px;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;}
     @media (max-width:980px){.months{grid-template-columns:repeat(3,minmax(0,1fr));}}
     @media (max-width:640px){.months{grid-template-columns:repeat(2,minmax(0,1fr));}}
-    .monthCell{border:1px solid var(--line);border-radius:18px;background:var(--homeCard);box-shadow:none;overflow:hidden;min-height:260px;display:flex;flex-direction:column;}
+    .monthCell{border:1px solid var(--line);border-radius:18px;background:var(--homeCard);overflow:hidden;min-height:260px;display:flex;flex-direction:column;}
     .monthHead{padding:10px 12px;font-weight:600;border-bottom:1px solid var(--line);background:var(--homeControl);}
     .monthBody{padding:10px 0 12px;display:flex;flex-direction:column;gap:10px;}
     .tripBar{border-radius:0;padding:10px 12px;font-weight:700;cursor:pointer;border:0;background:var(--accent,#eaeaea);color:var(--ink);display:flex;align-items:center;justify-content:center;height:44px;}
 
-    .detailWrap{border:1px solid var(--line);border-radius:24px;background:var(--card);box-shadow:none;overflow:hidden;}
+    .detailWrap{border:1px solid var(--line);border-radius:24px;background:var(--card);overflow:hidden;}
     .detailTop{padding:16px 16px 12px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;justify-content:space-between;gap:12px;background:var(--detailControl);}
     .detailTop h2{margin:0;font-size:26px;font-weight:950;letter-spacing:-0.02em;}
     .detailTop .meta{margin-top:6px;color:var(--muted);font-weight:600;font-size:14px;}
@@ -98,31 +103,47 @@
     .content{display:grid;grid-template-columns:420px 1fr;gap:0;min-height:520px;}
     @media (max-width:980px){.content{grid-template-columns:1fr;min-height:auto;}}
     .left{border-right:1px solid var(--line);padding:12px;background:transparent;}
-    @media (max-width:980px){.left{border-right:1px solid var(--line);padding:12px;background:transparent;}}
+    @media (max-width:980px){.left{border-right:0;}}
     .right{position:relative;min-height:520px;}
     #map{position:absolute;inset:0;}
 
-    .stop{border:1px solid var(--line);border-radius:18px;background:var(--card);box-shadow:0 6px 18px rgba(17,24,39,.05);padding:12px;margin-bottom:10px;}
-    .stopRow{display:grid;grid-template-columns:92px 60px 1fr 44px;gap:8px;align-items:center;}
-    .stopRow input,.qrow input{width:100%;border:1px solid var(--line);background:var(--homeControl);border-radius:12px;padding:10px 10px;font-weight:600;outline:none;} body.detail-mode .stopRow input, body.detail-mode .qrow input{background:var(--detailControl);} 
-    .stopRow input:focus,.qrow input:focus{border-color:rgba(15,94,122,.45);box-shadow:0 0 0 4px rgba(15,94,122,.12);}
-    .kill{border:1px solid var(--line);background:#fff;border-radius:12px;width:42px;height:42px;cursor:pointer;font-weight:700;color:#ef4444;}
-    .qrow{display:grid;grid-template-columns:1fr;margin-top:8px;gap:8px;}
-    .hint{color:var(--muted);font-weight:700;font-size:12px;line-height:1.35;margin:8px 2px 0;}
-    
-    
-    .stop{border:1px solid var(--line);border-radius:18px;background:var(--card);box-shadow:none;padding:14px;margin-bottom:12px;}
-    body.detail-mode .stop{background:var(--card);}
-    .stopRow{display:grid;grid-template-columns:110px 90px 1fr 44px;gap:10px;align-items:center;}
-    .qrow{display:grid;grid-template-columns:1fr 44px;gap:10px;align-items:center;margin-top:10px;}
-    .iconBtn{width:44px;height:44px;border-radius:14px;border:1px solid var(--line);background:var(--homeControl);cursor:pointer;font-weight:700;display:flex;align-items:center;justify-content:center;}
-    body.detail-mode .iconBtn{background:var(--detailControl);}
-    .iconBtn.delete{color:#b91c1c;border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.10);}
-    .iconBtn.delete:hover{background:rgba(239,68,68,.14);}
-    .iconBtn.check{color:#047857;border-color:rgba(16,185,129,.35);background:rgba(16,185,129,.12);}
-    .iconBtn.check:hover{background:rgba(16,185,129,.18);}
+    /* Stop cards (draggable) */
+    .stop{
+      border:1px solid rgba(0,0,0,.10);
+      border-radius:16px;
+      padding:10px;
+      margin-bottom:8px;
+      background: var(--detailControl);
+      cursor: grab;
+      user-select:none;
+    }
+    .stop:active{ cursor: grabbing; }
+    .stop.dragging{ opacity:.65; }
+    .stop.drop-target{ outline:2px solid rgba(59,130,246,.35); }
 
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;padding:18px;z-index:9999;}
+    .spotHeader{display:grid;grid-template-columns: 34px 52px 1fr 40px;align-items:center;gap:8px;}
+    .emojiBtn{ border:0; background:transparent; padding:0; cursor:pointer; font-size:16px; line-height:1; }
+    .timeWrap{ display:flex; align-items:center; gap:4px; }
+    .timeWrap input{ width:22px; border:0; outline:none; background:transparent; padding:0; text-align:center; font-size:12px; color:rgba(17,24,39,.75); }
+    .timeWrap .colon{ color:rgba(17,24,39,.55); font-size:12px; }
+    .spotNameWrap{display:flex;align-items:center;gap:8px;border:1px solid rgba(0,0,0,.10);background: rgba(255,255,255,.75);border-radius:10px;padding:7px 9px;}
+    .spotNum{font-size:11px;font-weight:600;min-width:24px;text-align:right;color:rgba(17,24,39,.70);}
+    .spotNameWrap input{border:0;background:transparent;outline:none;width:100%;font-weight:500;font-size:12px;}
+    .iconBtnX{width:40px;height:40px;border-radius:10px;border:1px solid rgba(0,0,0,.12);background: rgba(255,255,255,.70);cursor:pointer;font-weight:650;color:#b45309;display:flex;align-items:center;justify-content:center;}
+    .iconBtnX:hover{background: rgba(255,255,255,.86);}
+
+    .qRow{margin-top:10px;display:grid;grid-template-columns:1fr 40px;gap:8px;align-items:center;}
+    .qRow input{border:1px solid rgba(0,0,0,.10);background:#fff;border-radius:10px;padding:9px 10px;outline:none;font-weight:500;font-size:12px;}
+    .iconBtnCheck{width:40px;height:40px;border-radius:10px;border:1px solid rgba(0,0,0,.12);background: rgba(255,255,255,.70);cursor:pointer;font-weight:700;color:#047857;display:flex;align-items:center;justify-content:center;}
+    .iconBtnCheck:hover{background: rgba(255,255,255,.86);}
+    .spotFoot{margin-top:8px;display:flex;justify-content:space-between;align-items:center;gap:10px;}
+    .statusLine{display:flex;align-items:center;gap:8px;font-weight:500;color:rgba(17,24,39,.75);font-size:11px;}
+    .statusDot{width:12px;height:12px;border-radius:4px;border:1px solid rgba(0,0,0,.14);background: rgba(255,255,255,.75);display:flex;align-items:center;justify-content:center;font-size:10px;line-height:1;color:#047857;}
+    .hintRight{font-weight:600;color:rgba(17,24,39,.65);font-size:11px;}
+
+    .hint{color:var(--muted);font-weight:700;font-size:12px;line-height:1.35;margin:8px 2px 0;}
+
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;padding:18px;z-index:9999;}
     .overlay.show{display:flex;}
     .modal{width:min(640px,100%);background:var(--card);border-radius:22px;border:1px solid var(--line);box-shadow:0 18px 50px rgba(0,0,0,.22);overflow:hidden;}
     .modalHead{padding:14px 16px;background:var(--homeAccent);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px;}
@@ -134,744 +155,159 @@
     .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
     @media (max-width:640px){.row2{grid-template-columns:1fr;}}
     .tog{display:flex;gap:10px;align-items:center;}
-    .chip{border:1px solid var(--line);background:var(--pill);padding:10px 12px;border-radius:999px;font-weight:700;cursor:pointer;color:var(--muted);user-select:none;}
-    .chip.active{background:var(--pink2);color:var(--ink);}
+    .chip{border:1px solid var(--line);background:#fff;padding:10px 12px;border-radius:999px;font-weight:700;cursor:pointer;color:var(--muted);user-select:none;}
+    .chip.active{background:#f3f4f6;color:var(--ink);}
     .modalFoot{padding:14px 16px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end;background:#fff;}
     .danger{color:#ef4444;border-color:rgba(239,68,68,.35);}
 
-    .emojiBadge{width:34px;height:34px;border-radius:999px;background:var(--emojiBg);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 6px 14px rgba(17,24,39,.08);border:1px solid rgba(0,0,0,.08);}
-  
-    /* Spot card UI (ref: pink card + delete pill + query pill + status + check) */
-    .stop{border:1px solid rgba(236,72,153,.18);border-radius:22px;background:#fff3f6;padding:18px 18px 14px;box-shadow:none;margin-bottom:14px;}
-    body.detail-mode .stop{background:#fff3f6;}
-    .spotHeader{display:grid;grid-template-columns:34px 86px 1fr auto;gap:12px;align-items:center;}
-    .spotEmojiWrap{width:34px;height:34px;border-radius:12px;background:#ffffff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;}
-    .spotEmojiWrap input{border:0;background:transparent;width:100%;text-align:center;outline:none;font-weight:700;font-size:18px;font-family:inherit;}
-    .spotTime input,.spotName input{border:0;background:transparent;font-weight:700;font-size:15px;outline:none;padding:0;margin:0;width:100%;font-family:inherit;}
-    .deletePill{border:1px solid rgba(236,72,153,.30);background:#ffffff;color:#be185d;border-radius:14px;padding:8px 14px;font-weight:700;cursor:pointer;font-family:inherit;}
-    .deletePill:hover{background:#fff;}
-    .spotQuery{margin-top:12px;}
-    .spotQuery input{width:100%;border:1px solid rgba(0,0,0,.08);background:#ffffff;border-radius:999px;padding:12px 14px;font-weight:700;outline:none;font-family:inherit;}
-    .spotMeta{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:10px;}
-    .metaLeft{display:flex;align-items:center;gap:8px;color:#065f46;font-weight:600;}
-    .tick{width:16px;height:16px;border-radius:4px;background:rgba(16,185,129,.18);border:1px solid rgba(16,185,129,.35);display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1;color:#047857;}
-    .tick.wait{background:rgba(107,114,128,.12);border-color:rgba(107,114,128,.25);color:#374151;}
-    .tick.err{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.35);color:#b91c1c;}
-    .metaRight{display:flex;align-items:center;gap:10px;}
-    .enterHint{color:var(--muted);font-weight:600;}
-    .checkBtn{width:38px;height:38px;border-radius:14px;border:1px solid rgba(16,185,129,.35);background:rgba(16,185,129,.12);cursor:pointer;font-weight:700;color:#047857;display:flex;align-items:center;justify-content:center;font-family:inherit;}
-    .checkBtn:hover{background:rgba(16,185,129,.18);}
-
-
-    /* Spot card v2 (matches wireframe) */
-    .stop{
-      border:1px solid rgba(0,0,0,.12);
-      border-radius:22px;
-      background: var(--detailAccent);
-      padding:16px;
-      box-shadow:none;
-      margin-bottom:14px;
-    }
-    .spotHeader{
-      display:grid;
-      grid-template-columns: 90px 90px 1fr 54px;
-      gap:12px;
-      align-items:center;
-    }
-    .boxPh{
-      border:2px dashed rgba(0,0,0,.12);
-      background:rgba(255,255,255,.25);
-      border-radius:14px;
-      padding:12px 12px;
-      font-weight:600;
-      color:rgba(17,24,39,.85);
-      text-align:center;
-    }
-    .spotNameWrap{
-      position:relative;
-      display:flex;
-      align-items:center;
-      gap:10px;
-      border:1px solid rgba(0,0,0,.10);
-      background: rgba(255,255,255,.75);
-      border-radius:14px;
-      padding:10px 12px;
-    }
-    .spotNum{
-      font-weight:600;
-      color:rgba(17,24,39,.70);
-      min-width:28px;
-      text-align:right;
-    }
-    .spotNameWrap input{
-      border:0;
-      background:transparent;
-      outline:none;
-      width:100%;
-      font-weight:500;
-      font-size:15px;
-    }
-    .iconBtnX{
-      width:54px;height:54px;
-      border-radius:14px;
-      border:1px solid rgba(0,0,0,.12);
-      background: rgba(255,255,255,.70);
-      cursor:pointer;
-      font-weight:600;
-      color:#b45309;
-      display:flex;align-items:center;justify-content:center;
-    }
-    .iconBtnX:hover{background: rgba(255,255,255,.86);}
-    .qRow{
-      margin-top:12px;
-      display:grid;
-      grid-template-columns: 1fr 54px;
-      gap:12px;
-      align-items:center;
-    }
-    .qRow input{
-      border:1px solid rgba(0,0,0,.10);
-      background: rgba(255,255,255,.80);
-      border-radius:14px;
-      padding:12px 14px;
-      outline:none;
-      font-weight:500;
-    }
-    .iconBtnCheck{
-      width:54px;height:54px;
-      border-radius:14px;
-      border:1px solid rgba(0,0,0,.12);
-      background: rgba(255,255,255,.70);
-      cursor:pointer;
-      font-weight:700;
-      color:#047857;
-      display:flex;align-items:center;justify-content:center;
-    }
-    .iconBtnCheck:hover{background: rgba(255,255,255,.86);}
-    .spotFoot{
-      margin-top:10px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-    }
-    .statusLine{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      font-weight:500;
-      color:rgba(17,24,39,.75);
-    }
-    .statusDot{
-      width:14px;height:14px;border-radius:4px;
+    .emojiBadge{width:34px;height:34px;border-radius:999px;background:var(--emojiBg);display:flex;align-items:center;justify-content:center;font-size:18px;border:1px solid rgba(0,0,0,.08);}
+    .emojiPop{
+      position:absolute; top:22px; left:0;
+      display:none;
+      grid-template-columns: repeat(8, 24px);
+      gap:6px;
+      padding:10px;
       border:1px solid rgba(0,0,0,.14);
-      background: rgba(255,255,255,.75);
-      display:flex;align-items:center;justify-content:center;
-      font-size:11px;line-height:1;
-      color:#047857;
-    }
-    .hintRight{
-      font-weight:600;
-      color:rgba(17,24,39,.65);
-    }
-
-
-    /* ===== Compact clean style (smaller type, smaller boxes, less bold) ===== */
-    :root{
-      --fs-xxs:10px;
-      --fs-xs:11px;
-      --fs-sm:12px;
-      --fs-md:14px;
-      --fs-lg:16px;
-    }
-    body{font-size:var(--fs-sm); line-height:1.28;}
-    h1,h2,h3{letter-spacing:-.2px;}
-    .appTitle{font-size:var(--fs-lg) !important; font-weight:600 !important;}
-    .subTitle{font-size:var(--fs-xs) !important; font-weight:500 !important; color:var(--muted) !important;}
-
-    /* Buttons */
-    .btn{padding:9px 11px !important; border-radius:12px !important; font-weight:600 !important; font-size:var(--fs-xs) !important;}
-    .btn.primary{font-weight:650 !important;}
-    .btn.ghost{font-weight:600 !important;}
-    .seg{padding:3px !important; gap:3px !important;}
-    .seg button{padding:7px 10px !important; font-size:var(--fs-xs) !important; font-weight:600 !important;}
-
-    /* Trip cards (home) */
-    .tripCard{padding:14px !important; min-height:130px !important; border-radius:18px !important;}
-    .tripCard h3{font-size:var(--fs-md) !important; font-weight:650 !important; margin:0 0 6px 0 !important;}
-    .tripCard .meta{font-size:var(--fs-xs) !important; font-weight:500 !important;}
-
-    /* Calendar */
-    .monthCell{min-height:220px !important; border-radius:16px !important;}
-    .monthHead{padding:8px 10px !important; font-size:var(--fs-xs) !important; font-weight:650 !important;}
-    .tripBar{height:36px !important; font-size:var(--fs-xs) !important; font-weight:650 !important;}
-
-    /* Detail header & tabs */
-    .detailTop{padding:12px 12px 10px !important;}
-    .detailTop h2{font-size:var(--fs-lg) !important; font-weight:650 !important; margin:0 !important;}
-    .detailTop .muted{font-size:var(--fs-xs) !important; font-weight:500 !important;}
-    .tabs{gap:8px !important;}
-    .tab{padding:8px 10px !important; font-size:var(--fs-xs) !important; font-weight:600 !important;}
-    .tab.active{font-weight:650 !important;}
-
-    /* Panels spacing */
-    .left{padding:10px !important;}
-    .right{padding:10px !important;}
-    .card{border-radius:18px !important;}
-
-    /* Spot card (query box) */
-    .stop{border-radius:18px !important; padding:12px !important; margin-bottom:10px !important;}
-    .spotHeader{grid-template-columns:72px 72px 1fr 44px !important; gap:10px !important;}
-    .boxPh{padding:9px 10px !important; border-radius:12px !important; font-size:var(--fs-xs) !important; font-weight:600 !important;}
-    .spotNameWrap{padding:8px 10px !important; border-radius:12px !important;}
-    .spotNum{font-size:var(--fs-xs) !important; font-weight:600 !important; min-width:24px !important;}
-    .spotNameWrap input{font-size:var(--fs-sm) !important; font-weight:500 !important;}
-    .iconBtnX{width:44px !important; height:44px !important; border-radius:12px !important; font-size:var(--fs-xs) !important; font-weight:650 !important;}
-    .qRow{margin-top:10px !important; grid-template-columns:1fr 44px !important; gap:10px !important;}
-    .qRow input{padding:10px 12px !important; border-radius:12px !important; font-size:var(--fs-sm) !important; font-weight:500 !important;}
-    .iconBtnCheck{width:44px !important; height:44px !important; border-radius:12px !important; font-size:var(--fs-xs) !important; font-weight:700 !important;}
-    .spotFoot{margin-top:8px !important;}
-    .statusLine{font-size:var(--fs-xs) !important; font-weight:500 !important;}
-    .statusDot{width:12px !important; height:12px !important; font-size:10px !important;}
-    .hintRight{font-size:var(--fs-xs) !important; font-weight:600 !important;}
-
-    /* Add spot button at bottom */
-    .addStopBtn{padding:10px 12px !important; border-radius:14px !important; font-size:var(--fs-xs) !important; font-weight:650 !important;}
-    .helperText{font-size:var(--fs-xxs) !important; font-weight:500 !important;}
-
-    /* Leaflet controls */
-    .leaflet-control-zoom a{width:28px !important; height:28px !important; line-height:28px !important; font-size:16px !important;}
-    .routeHint{font-size:var(--fs-xxs) !important; font-weight:600 !important; padding:6px 8px !important; border-radius:10px !important;}
-
-
-    /* v7 tweaks */
-    .container, .shell, .wrap, .appWrap { max-width:100% !important; width:100% !important; }
-    .card, .panel, .panelWrap { box-shadow:none !important; }
-    .main { max-width:100% !important; }
-
-
-    /* Ensure spot card background follows trip theme */
-    body.detail-mode .stop{ background: var(--detailAccent) !important; }
-    .stop{ background: var(--detailAccent) !important; }
-
-
-    .boxPh{
-      border:0 !important;
-      background:transparent !important;
-      padding:0 !important;
-      border-radius:0 !important;
-      font-weight:600 !important;
-      color:rgba(17,24,39,.80) !important;
-      text-align:left !important;
-    }
-
-
-    .spotHeader{grid-template-columns:60px 60px 1fr 40px !important; gap:8px !important;}
-    .iconBtnX{width:40px !important;height:40px !important;border-radius:10px !important;}
-    .qRow{grid-template-columns:1fr 40px !important; gap:8px !important;}
-    .iconBtnCheck{width:40px !important;height:40px !important;border-radius:10px !important;}
-    .stop{border-radius:16px !important; padding:10px !important; margin-bottom:8px !important;}
-    .spotNameWrap{padding:7px 9px !important;border-radius:10px !important;}
-    .qRow input{padding:9px 10px !important;border-radius:10px !important;}
-
-
-    .tab{padding:7px 9px !important; font-size:var(--fs-xs) !important;}
-    .detailTop h2{font-size:var(--fs-lg) !important;}
-
-
-
-/* ===== v10: global clean (no shadows, minimal bold) ===== */
-*{ box-shadow:none !important; }
-.leaflet-popup-content-wrapper,.leaflet-popup-tip{ box-shadow:none !important; }
-html,body,input,button,textarea,select{ font-weight:400 !important; }
-b,strong{ font-weight:400 !important; }
-
-/* Titles only */
-.appTitle,.homeTitle,.detailTop h2{
-  font-family:"Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", Arial, sans-serif !important;
-  font-weight:700 !important;
-}
-
-/* Calendar: connected table */
-.calendarGrid{
-  display:grid;
-  grid-template-columns:repeat(6,1fr);
-  gap:0 !important;
-  border:1px solid rgba(0,0,0,.18);
-  border-radius:0 !important;
-  overflow:hidden;
-  background:#fff;
-}
-.monthCell{
-  border-radius:0 !important;
-  border-right:1px solid rgba(0,0,0,.18);
-  border-bottom:1px solid rgba(0,0,0,.18);
-  background:#fff;
-  min-height:240px;
-}
-.monthCell:nth-child(6n){ border-right:0; }
-.monthCell:nth-last-child(-n+6){ border-bottom:0; }
-.monthHead{ background:#fff; border-bottom:1px solid rgba(0,0,0,.10); font-weight:400 !important; }
-
-/* Stops use trip accent */
-.stop{ background: var(--detailControl) !important; border:1px solid rgba(0,0,0,.10) !important; }
-.stop .qRow input{ background:#fff !important; }
-
-/* Emoji/time minimalist */
-.spotHeader{ display:grid !important; grid-template-columns: 26px 52px 1fr 32px !important; align-items:center !important; gap:8px !important; }
-.emojiBtn{ border:0; background:transparent; padding:0; cursor:pointer; font-size:16px; line-height:1; }
-.timeWrap{ display:flex; align-items:center; gap:6px; }
-.timeWrap input{ width:24px; border:0; outline:none; background:transparent; padding:0; text-align:center; font-size:12px; color:rgba(17,24,39,.75); }
-.timeWrap .colon{ color:rgba(17,24,39,.55); font-size:12px; }
-.emojiPop{
-  position:absolute; top:22px; left:0;
-  display:none;
-  grid-template-columns: repeat(8, 24px);
-  gap:6px;
-  padding:10px;
-  border:1px solid rgba(0,0,0,.14);
-  background:#fff;
-  border-radius:12px;
-  z-index:9999;
-}
-.emojiPop.open{ display:grid; }
-.emojiOpt{
-  width:24px;height:24px;
-  border-radius:8px;
-  border:1px solid rgba(0,0,0,.08);
-  background:#fff;
-  display:flex;align-items:center;justify-content:center;
-  cursor:pointer;
-  font-size:15px;
-}
-.emojiOpt:hover{ background:rgba(0,0,0,.04); }
-
-/* Compact text sizes (even smaller) */
-.detailTop h2{ font-size:16px !important; }
-.meta{ font-size:11px !important; }
-.tab{ font-size:11px !important; padding:6px 10px !important; }
-.stop{ padding:10px 12px !important; }
-.qRow input{ font-size:12px !important; height:30px !important; }
-.iconBtnX,.iconBtnCheck{ width:30px !important; height:30px !important; font-size:12px !important; }
-.statusLine,.hintRight{ font-size:11px !important; }
-
-    /* ===== v11 home theme: white bg, light-gray accent ===== */
-    body{ background:#ffffff !important; }
-    body.home-mode{
-      --homeBg: #ffffff;
-      --homeAccent: #e5e7eb; /* light gray */
-      --homeAccent2: #f3f4f6;
-      background: var(--homeBg) !important;
-    }
-    body.home-mode .topBar,
-    body.home-mode .seg{
-      background: rgba(229,231,235,.55) !important;
-      border-color: rgba(0,0,0,.10) !important;
-    }
-    body.home-mode .btn.primary{
-      background: var(--homeAccent) !important;
-      color: rgba(17,24,39,.85) !important;
-      border-color: rgba(0,0,0,.12) !important;
-    }
-    body.home-mode .btn.primary:hover{ background: #d1d5db !important; }
-
-
-    /* ===== v11 home cards: wider & centered ===== */
-    .tripGrid{
-      display:flex !important;
-      flex-wrap:wrap !important;
-      gap:18px !important;
-      justify-content:center !important;
-      align-items:stretch !important;
-    }
-    .tripCard{
-      width: 340px !important;
-      max-width: 340px !important;
-      min-height: 180px !important;
-      border-radius: 28px !important;
-    }
-
-
-    /* ===== v11 calendar ribbon: full width & bold title ===== */
-    .tripBar{
-      width:100% !important;
-      display:flex !important;
-      align-items:center !important;
-      justify-content:center !important;
-      font-weight:700 !important;
-      letter-spacing:-.2px;
-    }
-
-
-    /* ===== v11 year select modal ===== */
-    .modalOverlay{
-      position:fixed; inset:0; background:rgba(0,0,0,.35);
-      display:none; align-items:center; justify-content:center;
-      z-index:10000;
-    }
-    .modalCard{
-      width: 340px;
-      border:1px solid rgba(0,0,0,.12);
-      border-radius:18px;
-      background:#fff;
-      padding:14px;
-    }
-    .modalHead{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
-    .modalTitle{ font-weight:700; letter-spacing:-.2px; }
-    .modalClose{ border:0; background:transparent; cursor:pointer; font-size:16px; }
-    .yearGrid{
-      display:grid; grid-template-columns:repeat(4, 1fr); gap:8px;
-    }
-    .yearBtn{
-      border:1px solid rgba(0,0,0,.12);
       background:#fff;
       border-radius:12px;
-      padding:10px 0;
+      z-index:9999;
+    }
+    .emojiPop.open{ display:grid; }
+    .emojiOpt{
+      width:24px;height:24px;
+      border-radius:8px;
+      border:1px solid rgba(0,0,0,.08);
+      background:#fff;
+      display:flex;align-items:center;justify-content:center;
       cursor:pointer;
-      font-weight:600;
-      font-size:12px;
+      font-size:15px;
     }
-    .yearBtn:hover{ background:rgba(0,0,0,.04); }
-    .yearBtn.active{ background:rgba(229,231,235,.75); }
+    .emojiOpt:hover{ background:rgba(0,0,0,.04); }
 
+    /* Home cards layout */
+    #tripGrid{display:flex !important;flex-wrap:wrap !important;gap:25px !important;justify-content:flex-start !important;align-items:stretch !important;}
+    .tripCard{width:220px !important;min-height:260px !important;border-radius:28px !important;padding:18px !important;text-align:center !important;background: var(--accent, #e5e7eb) !important;box-shadow: 0 3px 10px rgba(0,0,0,.14) !important;}
+    .tripCard .tripTitle{font-size:24px !important;line-height:1.32 !important;font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", Arial, sans-serif !important;font-weight:700 !important;color: var(--titleColor, #111827) !important;}
+    .tripCard .tripDates{font-size:14.4px !important;font-weight:700 !important;color:#111827 !important;}
+    .tripCard.tripPlus{display:flex !important;align-items:center !important;justify-content:center !important;cursor:pointer;background: transparent !important;border:2px dashed rgba(0,0,0,.16) !important;box-shadow:none !important;}
+    .tripDelBtn{position:absolute;top:10px;right:10px;width:28px;height:28px;border-radius:999px;border:1px solid rgba(0,0,0,.14);background: rgba(255,255,255,.55);color: rgba(17,24,39,.85);cursor:pointer;font-size:12px;line-height:28px;display:flex;align-items:center;justify-content:center;z-index:20 !important;}
+    .tripDelBtn:hover{ background: rgba(255,255,255,.85); }
 
-    /* ===== v11 detail: more opaque spot background ===== */
-    .stop{
-      background: color-mix(in srgb, var(--detailAccent) 85%, white 15%) !important;
-    }
+    /* Year modal */
+    .modalOverlay{position:fixed; inset:0; background:rgba(0,0,0,.35);display:none; align-items:center; justify-content:center;z-index:10000;}
+    .modalCard{width:340px;border:1px solid rgba(0,0,0,.12);border-radius:18px;background:#fff;padding:14px;}
+    .modalHead2{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;}
+    .modalTitle{font-weight:700; letter-spacing:-.2px;}
+    .modalClose{border:0; background:transparent; cursor:pointer; font-size:16px;}
+    .yearGrid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
+    .yearOpt{border:1px solid #e5e7eb; background:#fff; border-radius:10px; padding:10px 0; font-size:12px; cursor:pointer;}
+    .yearOpt.active{background:#f3f4f6; border-color:#d1d5db;}
 
-
-    /* ===== v11 time width reduce ===== */
-    .spotHeader{ grid-template-columns: 34px 52px 1fr 40px !important; }
-    .timeWrap input{ width:22px !important; }
-    .timeWrap{ gap:4px !important; }
-
-
-    /* ===== v12 home cards: vertical/tall, text centered ===== */
-    .tripGrid{
-      justify-content:flex-start !important;
-    }
-    .tripCard{
-      width: 220px !important;
-      max-width: 220px !important;
-      min-height: 240px !important;
-      padding: 18px !important;
-      border-radius: 28px !important;
-      display:flex !important;
-      flex-direction:column !important;
-      justify-content:flex-start !important;
-    }
-    .tripCard h3, .tripCard .meta{ text-align:center !important; }
-    .tripCard h3{ margin-top:4px !important; }
-
-
-    /* ===== v12 detail: lighter spot background (more transparent look) ===== */
-    .stop{
-      background: color-mix(in srgb, var(--detailAccent) 35%, white 65%) !important;
-      border-color: rgba(0,0,0,.10) !important;
-    }
-
-
-    /* ===== v13 home cards: left aligned list, centered text inside ===== */
-    .tripGrid{
-      justify-content:flex-start !important;
-    }
-    .tripCard{ text-align:center !important; }
-    .tripCard h3{
-      color: var(--tripTextStrong, rgba(17,24,39,.92)) !important;
-      font-weight:700 !important; /* keep title emphasis */
-    }
-    .tripCard .meta, .tripCard .meta *{
-      color: rgba(55,65,81,.92) !important; /* dark gray */
-      font-size: inherit !important;
-      font-weight:400 !important;
-    }
-
-
-    .tripCard h3{ color: var(--titleColor, rgba(17,24,39,.92)) !important; }
-
-
-    /* ===== v13 detail edit button: light gray ===== */
-    .editBtn, .btnEdit, .btn.edit, button[data-role="edit"]{
-      background: rgba(229,231,235,.85) !important;
-      border-color: rgba(0,0,0,.12) !important;
-      color: rgba(17,24,39,.85) !important;
-    }
-    .editBtn:hover, .btnEdit:hover, .btn.edit:hover, button[data-role="edit"]:hover{
-      background: rgba(209,213,219,.95) !important;
-    }
-
-
-    /* ===== v13 detail top-right controls order ===== */
-    .detailControls{ display:flex !important; gap:10px !important; align-items:center !important; justify-content:flex-end !important; }
-    .detailControls .themeDot{ order:2 !important; }
-    .detailControls .editBtn, .detailControls .btnEdit{ order:1 !important; }
-
-
-    /* ===== v14 home cards layout ===== */
-    #tripGrid{
-      display:flex !important;
-      flex-wrap:wrap !important;
-      gap:10px !important;             /* tighter */
-      justify-content:flex-start !important; /* left align */
-      align-items:stretch !important;
-    }
-    .tripCard{
-      width:220px !important;
-      min-height:260px !important;     /* 조금 더 길게 */
-      border-radius:28px !important;
-      padding:18px !important;
-      text-align:center !important;    /* text centered inside */
-    }
-    .tripTitle{
-      font-weight:700 !important;
-      color: var(--titleColor, rgba(17,24,39,.92)) !important;
-    }
-    .tripMeta, .tripDates{
-      color: rgba(55,65,81,.92) !important;
-      font-size: 12px !important;
-      font-weight: 400 !important;
-    }
-
-
-    /* ===== v14 trip edit modal header ===== */
-    #tripOverlay .modalHead{
-      background: rgba(229,231,235,.85) !important;
-      border-bottom: 1px solid rgba(0,0,0,.10) !important;
-    }
-    #tripOverlay .modal{
-      overflow:hidden !important;
-    }
-
-
-    /* ===== v14 detail header right controls ===== */
-    .tripHeaderRight{
-      display:flex;
-      gap:10px;
-      align-items:center;
-      justify-content:flex-end;
-    }
-    .tripHeaderRight .themeDot{
-      width:18px; height:18px;
-      border-radius:999px;
-      border:1px solid rgba(0,0,0,.12);
-      flex:0 0 auto;
-    }
-    /* edit button as gear inside trip header, left of dot */
-    .tripHeaderRight #editTripBtn{
-      background: rgba(229,231,235,.85) !important;
-      border: 1px solid rgba(0,0,0,.12) !important;
-      color: rgba(17,24,39,.85) !important;
-      width:34px; height:34px;
-      border-radius:999px;
-      display:flex; align-items:center; justify-content:center;
-      padding:0 !important;
-    }
-    .tripHeaderRight #editTripBtn:hover{ background: rgba(209,213,219,.95) !important; }
-
-
-    /* ===== v14 hide edit button in top bar container (it gets moved) ===== */
-    #detailActions #editTripBtn{ display:none; }
-
-
-/* ===== v15 palette application ===== */
-.tripBar{ background: var(--accent) !important; color: var(--onAccent, #111827) !important; font-weight:700 !important; }
-.tripCard{ background: var(--accent) !important; }
-.tripCard h3{ color: var(--titleColor, #111827) !important; }
-.stop{ background: var(--queryBg, rgba(255,255,255,.9)) !important; }
-
-
-/* ===== v16 home card delete button ===== */
-.tripCard{ position:relative !important; }
-.tripDelBtn{
-  position:absolute;
-  top:10px; right:10px;
-  width:28px; height:28px;
-  border-radius:999px;
-  border:1px solid rgba(0,0,0,.14);
-  background: rgba(255,255,255,.55);
-  color: rgba(17,24,39,.85);
-  cursor:pointer;
-  font-size:12px;
-  line-height:28px;
-  display:flex; align-items:center; justify-content:center;
-}
-.tripDelBtn:hover{ background: rgba(255,255,255,.85); }
-
-
-/* ===== v17 detail gear button ===== */
-#detailGearBtn{
-  background: rgba(229,231,235,.85);
-  border: 1px solid rgba(0,0,0,.12);
-  color: rgba(17,24,39,.85);
-  width:34px; height:34px;
-  border-radius:999px;
-  display:flex; align-items:center; justify-content:center;
-  cursor:pointer;
-  font-size:14px;
-}
-#detailGearBtn:hover{ background: rgba(209,213,219,.95); }
-
-
-/* ===== v18 typography for titles ===== */
-.tripTitle, .detailTop h2, .tripBarTitle, .tripBar{
-  font-family: "Paytone One", system-ui, -apple-system, "Segoe UI", Roboto, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", Arial, sans-serif !important;
-  letter-spacing: -0.2px;
+    /* Detail header right */
+    .tripHeaderRight{display:flex;gap:10px;align-items:center;justify-content:flex-end;}
+    .themeDot{width:18px;height:18px;border-radius:999px;border:1px solid rgba(0,0,0,.12);}
+    #detailGearBtn{background: rgba(229,231,235,.85);border: 1px solid rgba(0,0,0,.12);color: rgba(17,24,39,.85);width:34px; height:34px;border-radius:999px;display:flex; align-items:center; justify-content:center;cursor:pointer;font-size:14px;}
+    #detailGearBtn:hover{ background: rgba(209,213,219,.95); }
+  
+/* ===== v26 UI chrome: force light-gray (GitHub Pages safe) ===== */
+:root{
+  --uiChrome: #e5e7eb;       /* light gray */
+  --uiChromeBorder: rgba(0,0,0,.10);
 }
 
-
-/* ===== v18 color rules ===== */
-/* Home card view */
-.tripCard{
-  background: var(--queryBg, #ffffff) !important; /* card uses queryBg */
-}
-.tripCard .tripTitle{
-  color: var(--titleColor, #111827) !important;  /* title uses titleColor */
-}
-.tripCard .tripMeta, .tripCard .tripDates, .tripCard .meta{
-  color: #111827 !important; /* fixed */
+/* Trip edit modal header (and name modal header) */
+#tripOverlay .modalHead,
+#nameOverlay .modalHead{
+  background: var(--uiChrome) !important;
+  border-bottom: 1px solid var(--uiChromeBorder) !important;
 }
 
-/* Project detail: title uses titleColor, rest unchanged */
-.detailTop h2{
-  color: var(--titleColor, #111827) !important;
+/* Home top controls: view toggle + add button */
+#viewSeg{
+  background: rgba(229,231,235,.75) !important;
+  border-color: var(--uiChromeBorder) !important;
 }
-
-
-/* ===== v19 titles: Sans Serif Bold ===== */
-.tripTitle, .detailTop h2, .tripBar, .tripBarTitle{
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", Arial, sans-serif !important;
-  font-weight: 700 !important;
-  letter-spacing: -0.2px;
+#viewSeg button.active{
+  background:#ffffff !important;
+  color: var(--ink) !important;
 }
-
-
-/* ===== v19 home card spacing + bg ===== */
-#tripGrid, .tripGrid{
-  gap: 25px !important;
+#addTripBtn{
+  background: rgba(229,231,235,.85) !important;
+  border-color: rgba(0,0,0,.12) !important;
+  color: rgba(17,24,39,.85) !important;
 }
-.tripCard{
-  background: var(--accent, #e5e7eb) !important;
+#addTripBtn:hover{ background: rgba(209,213,219,.95) !important; }
+
+/* Trip edit modal: delete button as full-width row under theme select */
+#tripOverlay .modalDeleteRow{
+  padding: 0;
+  margin-top: 12px;
 }
-
-
-.tripCard .tripMeta, .tripCard .tripDates, .tripCard .meta{
-  color:#111827 !important;
-}
-.tripCard .tripTitle{ color: var(--titleColor, #111827) !important; }
-
-
-/* ===== v19 delete button clickability ===== */
-.tripDelBtn{ z-index: 20 !important; position:absolute !important; }
-
-
-/* ===== v20 card typography rules ===== */
-.tripTitle{
-  font-size: 24px !important;  /* ~2x */
-  line-height: 1.1 !important;
-  color: var(--titleColor, #111827) !important;
-}
-.tripDates{
-  font-weight: 700 !important;
-}
-
-
-/* ===== v22 enforce titleColor on card titles ===== */
-.tripCard .tripTitle{
-  color: var(--titleColor, #111827) !important;
-}
-
-
-/* ===== v22 card subtle shading ===== */
-.tripCard{
-  box-shadow: 0 1px 2px rgba(0,0,0,.10) !important;
-}
-
-
-/* ===== v23 card shadow ===== */
-.tripCard{
-  box-shadow: 0 3px 10px rgba(0,0,0,.14) !important;
-}
-
-
-/* ===== v23 card typography tweaks ===== */
-.tripCard .tripTitle{
-  line-height: 1.65 !important; /* increase from ~1.1 */
-}
-.tripCard .tripDates{
-  font-size: 14.4px !important; /* if base ~12px, 1.2x */
-  font-weight: 700 !important;
-}
-
-
-/* ===== v23 add-card button centering ===== */
-.addTripCard{
-  display:flex !important;
-  align-items:center !important;
+#tripOverlay .modalDeleteRow .btn.full{
+  width:100% !important;
   justify-content:center !important;
-}
-.addTripCard .plus{
-  position:static !important;
-  transform:none !important;
-  margin:0 !important;
+  padding:12px 14px !important;
+  border-radius:14px !important;
 }
 
-
-/* ===== v23 edit modal delete layout ===== */
-.modalDeleteRow{
-  margin-top:10px;
+/* Brand logo */
+.brandWrap{
+  display:flex;
+  align-items:center;
+  gap:10px;
 }
-.modalDeleteRow button{
-  width:100%;
-  padding:12px 14px;
-  border-radius:14px;
-  border:1px solid rgba(0,0,0,.14);
-  background: rgba(239,68,68,.10);
-  color: rgba(185,28,28,1);
-  font-weight:600;
-  cursor:pointer;
+#brandLogo{
+  height:28px;
+  width:auto;
+  display:block;
 }
-.modalDeleteRow button:hover{ background: rgba(239,68,68,.16); }
+@media (max-width:640px){
+  #brandLogo{ height:24px; }
+}
 
 
-#tripOverlay .modalFoot #deleteTripBtn{ display:none !important; }
+/* Force specific controls to light-gray (fix yellow regressions) */
+#saveTripBtn.btn.primary{
+  background:#e5e7eb !important;
+  border-color:rgba(0,0,0,.12) !important;
+  color:rgba(17,24,39,.88) !important;
+}
+#saveTripBtn.btn.primary:hover{ background:#d1d5db !important; }
+
+#yearBtn{
+  background:#e5e7eb !important;
+  border-color:rgba(0,0,0,.12) !important;
+  color:rgba(17,24,39,.88) !important;
+}
+#yearBtn:hover{ background:#d1d5db !important; }
 
 
-/* ===== v24 card title line-height tighter ===== */
-.tripCard .tripTitle{ line-height: 1.32 !important; }
+/* Spot name: bold text only (no box) */
+.spotNameWrap{
+  background:transparent !important;
+  border:0 !important;
+  padding:0 !important;
+  gap:8px !important;
+}
+.spotNameWrap input{
+  background:transparent !important;
+  border:0 !important;
+  padding:0 !important;
+  font-weight:700 !important;
+  color:rgba(17,24,39,.92) !important;
+}
+.spotNameWrap input::placeholder{ color:rgba(17,24,39,.35) !important; }
+.spotNameWrap input:focus{ outline:none !important; }
 
-
-/* ===== v24 add-card perfect center ===== */
-.addTripCard{ display:flex !important; align-items:center !important; justify-content:center !important; }
-.addTripCard .plus{ display:flex !important; align-items:center !important; justify-content:center !important; height:100% !important; width:100% !important; }
-
-
-/* ===== v24 modal delete at bottom ===== */
-.modalDeleteRow{ margin-top: 16px; }
-
-
-/* ===== v25 fixes ===== */
-.tripCard.tripPlus{ display:flex !important; align-items:center !important; justify-content:center !important; }
-.tripCard.tripPlus{ min-height: 220px; } /* keep tall like other cards */
-.tripCard.tripPlus{ cursor:pointer; }
-
-
-/* v25 modal delete full-width at bottom */
-.modalDeleteRow{ width:100%; padding: 0 18px 14px; }
-.modalDeleteRow #deleteTripBtn{ width:100% !important; border-radius:14px !important; }
-
-
-.yearGrid{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; padding:14px; }
-.yearOpt{ border:1px solid #e5e7eb; background:#fff; border-radius:10px; padding:10px 0; font-size:12px; cursor:pointer; }
-.yearOpt.active{ background:#f3f4f6; border-color:#d1d5db; }
-.modalDeleteRow{ padding:0 16px 12px 16px; }
-.btn.full{ width:100%; justify-content:center; }
 </style>
 </head>
 <body>
   <div class="app">
     <div class="topbar">
-      <div class="brand" id="brand">{name}-in-World</div>
+      <div class="brandWrap">
+        <img id="brandLogo" src="logo.gif" alt="logo" />
+        <div class="brand" id="brand"><span id="brandText">{name}-in-World</span><img id="brandLogo" src="logo.gif" alt="logo"/></div>
+      </div>
 
       <div class="actions" id="homeActions">
         <div class="seg" id="viewSeg">
@@ -913,7 +349,8 @@ b,strong{ font-weight:400 !important; }
             <button class="btn" id="addStopBtn" style="width:100%; margin-top:8px;">스팟 추가</button>
             <div class="hint">
               • Query 수정 후 <b>Enter</b> 치면 해당 스팟만 다시 인식한다.<br/>
-              • 저장은 자동(localStorage)이다.
+              • 저장은 자동(localStorage)이다.<br/>
+              • 스팟 카드는 <b>드래그</b>해서 순서를 바꿀 수 있다.
             </div>
           </div>
           <div class="right">
@@ -928,7 +365,7 @@ b,strong{ font-weight:400 !important; }
   <div class="overlay" id="nameOverlay">
     <div class="modal">
       <div class="modalHead">
-        <h3 class=\"tripTitle\">name 입력</h3>
+        <h3>name 입력</h3>
         <div></div>
       </div>
       <div class="modalBody">
@@ -994,14 +431,18 @@ b,strong{ font-weight:400 !important; }
           </select>
         </div>
 
+
+        <div class="modalDeleteRow" id="deleteRow">
+          <button class="btn danger full" id="deleteTripBtn" style="display:none;">삭제</button>
+        </div>
+
         <div class="hint">
           • With someone 선택 시 제목이 <b>{name}, Amy in Danang</b> 형태가 된다.<br/>
           • When 미정이면 캘린더에 표시되지 않는다.
         </div>
       </div>
-      <div class="modalDeleteRow"><button class="btn danger full" id="deleteTripBtn" style="display:none;">삭제</button></div>
       <div class="modalFoot">
-        <button class="btn primary" id="saveTripBtn">저장</button>
+<button class="btn primary" id="saveTripBtn">저장</button>
       </div>
     </div>
   </div>
@@ -1026,8 +467,7 @@ function dateRangeLabel(trip){
 function loadState(){ try{ const raw=localStorage.getItem(LS_KEY); return raw?JSON.parse(raw):null; }catch(e){ return null; } }
 function saveState(){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
 
-
-  const THEME_PRESETS = [
+const THEME_PRESETS = [
   {"key":"Apricot","themeAccent":"#F2AA84","titleColor":"#B54E29","queryBg":"#FCEEE6","onAccent":"#FFFFFF"},
   {"key":"Sky","themeAccent":"#BFE7FB","titleColor":"#0B4A6E","queryBg":"#F2FAFE","onAccent":"#111827"},
   {"key":"Pink","themeAccent":"#F3D4E7","titleColor":"#7A2F57","queryBg":"#FDF6FA","onAccent":"#111827"},
@@ -1037,42 +477,33 @@ function saveState(){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
   {"key":"White","themeAccent":"#F6F7F9","titleColor":"#111827","queryBg":"#FDFDFE","onAccent":"#111827"},
   {"key":"Cocoa","themeAccent":"#D3C1B5","titleColor":"#5A3D2E","queryBg":"#F6F3F0","onAccent":"#FFFFFF"}
 ];
-  function presetByKey(k){ return THEME_PRESETS.find(p=>p.key===k) || THEME_PRESETS[0]; }
+function presetByKey(k){ return THEME_PRESETS.find(p=>p.key===k) || THEME_PRESETS[0]; }
+function presetForTrip(trip){
+  if(!trip) return THEME_PRESETS[0];
+  if(trip.themeKey) return presetByKey(trip.themeKey);
+  const c = String(trip.color||trip.themeAccent||"").toLowerCase();
+  const found = THEME_PRESETS.find(p => String(p.themeAccent).toLowerCase()===c);
+  return found || THEME_PRESETS[0];
+}
+function hydrateTripPalette(trip){
+  const p = presetForTrip(trip);
+  if(!trip.themeKey) trip.themeKey = p.key;
+  if(!trip.color) trip.color = p.themeAccent;
+  if(!trip.titleColor) trip.titleColor = p.titleColor;
+  if(!trip.queryBg) trip.queryBg = p.queryBg;
+  if(!trip.onAccent) trip.onAccent = p.onAccent;
+  return trip;
+}
 
-  
-  function presetForTrip(trip){
-    if(!trip) return THEME_PRESETS[0];
-    if(trip.themeKey) return presetByKey(trip.themeKey);
-    // try match by accent color
-    const c = String(trip.color||trip.themeAccent||"").toLowerCase();
-    const found = THEME_PRESETS.find(p => String(p.themeAccent).toLowerCase()===c);
-    return found || THEME_PRESETS[0];
-  }
-  function hydrateTripPalette(trip){
-    const p = presetForTrip(trip);
-    if(!trip.themeKey) trip.themeKey = p.key;
-    if(!trip.color) trip.color = p.themeAccent;
-    if(!trip.titleColor) trip.titleColor = p.titleColor;
-    if(!trip.queryBg) trip.queryBg = p.queryBg;
-    if(!trip.onAccent) trip.onAccent = p.onAccent;
-    return trip;
-  }
-function populateThemeSelect(sel, currentKey){
-    if(!sel) return;
-    sel.innerHTML = THEME_PRESETS.map(p=>`<option value="${p.key}">${p.key}</option>`).join("");
-    sel.value = currentKey || THEME_PRESETS[0].key;
-  }
 let state = loadState() || { userName:"", viewMode:"cards", calendarYear:(new Date()).getFullYear(), trips:[] };
-
-// defaults / migration
 if(state && typeof state==="object"){
-  if(state.calendarYear==null){ state.calendarYear = state.selectedYear ?? (new Date()).getFullYear(); }
-  if(state.selectedYear!=null) delete state.selectedYear;
+  if(state.calendarYear==null){ state.calendarYear = (new Date()).getFullYear(); }
   if(!state.viewMode) state.viewMode="cards";
   if(!state.trips) state.trips=[];
 }
 
 if(!state.trips || !state.trips.length){
+  const sky = presetByKey("Sky");
   state.trips = [{
     id: uid(),
     where: "SHANGHAI",
@@ -1080,12 +511,18 @@ if(!state.trips || !state.trips.length){
     endDate: "2025-05-25",
     withMode: "with",
     withWhom: "Amy",
-    color: "#bfe8ff",
+    themeKey: "Sky",
+    color: sky.themeAccent,
+    titleColor: sky.titleColor,
+    queryBg: sky.queryBg,
+    onAccent: sky.onAccent,
     days: [{id:uid(),label:"Day 1",stops:[]},{id:uid(),label:"Day 2",stops:[]},{id:uid(),label:"Day 3",stops:[]}]
   }];
 }
 
 const brandEl=document.getElementById("brand");
+const brandTextEl=document.getElementById("brandText");
+const brandLogoEl=document.getElementById("brandLogo");
 const homeView=document.getElementById("homeView");
 const detailView=document.getElementById("detailView");
 const homeActions=document.getElementById("homeActions");
@@ -1099,7 +536,6 @@ const monthsGrid=document.getElementById("monthsGrid");
 const yearBtn=document.getElementById("yearBtn");
 const addTripBtn=document.getElementById("addTripBtn");
 const backBtn=document.getElementById("backBtn");
-const editTripBtn=document.getElementById("editTripBtn");
 
 const nameOverlay=document.getElementById("nameOverlay");
 const nameInput=document.getElementById("nameInput");
@@ -1164,6 +600,9 @@ function fitToMarkers(trip, dayIdx){
   if(!pts.length) return;
   map.fitBounds(L.latLngBounds(pts).pad(0.25));
 }
+
+/* IMPORTANT: markers' stopIdx must follow day.stops order.
+   After reordering, we rebuild markers from state in renderDetail(). */
 async function upsertMarkerForStop(trip, dayIdx, stopIdx){
   ensureMap();
   const stop = trip.days[dayIdx].stops[stopIdx];
@@ -1178,19 +617,8 @@ async function upsertMarkerForStop(trip, dayIdx, stopIdx){
     }
     stop.lat=r.lat; stop.lng=r.lng; stop._display=r.display;
     if(statusEl) statusEl.textContent = "OK";
-
-    const existing = markers.find(m=>m.tripId===trip.id && m.dayIdx===dayIdx && m.stopIdx===stopIdx);
-    if(existing){
-      map.removeLayer(existing.marker);
-      markers = markers.filter(m=>m!==existing);
-    }
-    const marker = L.marker([r.lat,r.lng], { icon: makeEmojiIcon(stop.emoji) }).addTo(map);
-    marker.on("click", ()=> map.setView([r.lat,r.lng], 16, {animate:true}));
-    marker.bindPopup(`<b>${stop.emoji||"📍"} ${escapeHtml(stop.name||"Spot")}</b><br/>${escapeHtml(stop.query||"")}`);
-    markers.push({ marker, tripId:trip.id, dayIdx, stopIdx });
-    redrawPolyline(trip, dayIdx);
-    fitToMarkers(trip, dayIdx);
     saveState();
+    renderDetail(); // rebuild markers with new lat/lng & correct order
   }catch(e){
     if(statusEl) statusEl.textContent = "⚠ 네트워크/인식 오류 — 다시 시도";
   }
@@ -1199,7 +627,7 @@ async function upsertMarkerForStop(trip, dayIdx, stopIdx){
 /* Render */
 function setBrand(){
   const name = state.userName || "{name}";
-  brandEl.textContent = `${name}-in-World`;
+  if(brandTextEl) brandTextEl.textContent = `${name}-in-World`;
   document.title = `${name}-in-World`;
 }
 function showHome(){
@@ -1226,21 +654,11 @@ function showDetail(tripId){
 }
 
 function render(){
-  // Single entry-point re-render so event handlers can safely call `render()`.
-  if(currentTripId){
-    renderDetail();
-    return;
-  }
+  if(currentTripId){ renderDetail(); return; }
   renderHome();
-  if(state.homeMode === "calendar"){
-    renderCalendar();
-  }
 }
 
 function renderHome(){
-  document.body.classList.add('home-mode');
-  document.body.classList.remove('detail-mode');
-  document.documentElement.style.removeProperty('--detailAccent');
   if(state.viewMode==="calendar"){
     segCal.classList.add("active"); segCards.classList.remove("active");
     cardsView.style.display="none"; calendarView.style.display="";
@@ -1254,38 +672,12 @@ function renderHome(){
     const card=document.createElement("div");
     card.className="tripCard";
     card.style.setProperty("--accent", (trip.color||presetForTrip(trip).themeAccent||"#e5e7eb"));
-card.style.setProperty("--titleColor", (trip.titleColor||presetForTrip(trip).titleColor||"#111827"));
-card.style.setProperty("--onAccent", trip.onAccent||"#111827");
-    card.style.setProperty("--queryBg", trip.queryBg||"#fff");
-card.innerHTML = `<button class="tripDelBtn" data-del="${trip.id}" type="button" title="삭제">×</button>
+    card.style.setProperty("--titleColor", (trip.titleColor||presetForTrip(trip).titleColor||"#111827"));
+    card.innerHTML = `<button class="tripDelBtn" data-del="${trip.id}" type="button" title="삭제">×</button>
       <div class="tripTitle">${escapeHtml((()=>{const me=(trip.name||state.userName||"Me").trim()||"Me";const withMode=trip.withMode||((trip.withWhom&&String(trip.withWhom).trim())?"with":"alone");const withWhom=String(trip.withWhom||"").trim();return (withMode==="alone"||!withWhom)? me : (me+", "+withWhom);})())}<br>${escapeHtml("in " + (trip.where||trip.destination||"Trip"))}</div>
-<div class="tripDates">${escapeHtml(trip.startDate&&trip.endDate?(`${trip.startDate} ~ ${trip.endDate}`):"When: 미정")}</div>
+      <div class="tripDates">${escapeHtml(trip.startDate&&trip.endDate?(`${trip.startDate} ~ ${trip.endDate}`):"When: 미정")}</div>
     `;
-    
-    
-    // removeDuplicateGears: keep only first settings/gear button inside card
-    (function(){
-      const gearBtns = card.querySelectorAll(".tripSettingsBtn, .gearBtn, .tripEditBtn");
-      if(gearBtns && gearBtns.length>1){
-        for(let i=1;i<gearBtns.length;i++) gearBtns[i].remove();
-      }
-    })();
-// Delete button handler (prevent card navigation)
-    const delBtn = card.querySelector(".tripDelBtn");
-    if(delBtn){
-      delBtn.addEventListener("click",(ev)=>{
-        ev.preventDefault();
-        ev.stopPropagation();
-        const id = delBtn.getAttribute("data-del");
-        if(!id) return;
-        if(confirm("이 여행 프로젝트를 삭제할까?")){
-          state.trips = (state.trips||[]).filter(t => String(t.id)!==String(id));
-          saveState();
-          render();
-        }
-      });
-    }
-card.addEventListener("click", ()=>showDetail(trip.id));
+    card.addEventListener("click", ()=>showDetail(trip.id));
     tripGrid.appendChild(card);
   });
   const plus=document.createElement("div");
@@ -1297,6 +689,7 @@ card.addEventListener("click", ()=>showDetail(trip.id));
   renderCalendar();
   yearBtn.textContent = `${state.calendarYear} ▾`;
 }
+
 function renderCalendar(){
   if(state.calendarYear==null) state.calendarYear = (new Date()).getFullYear();
   if(yearBtn) yearBtn.textContent = `${state.calendarYear} ▾`;
@@ -1327,29 +720,45 @@ function renderCalendar(){
     monthsGrid.appendChild(cell);
   }
 }
+
+function rebuildMarkersFromState(trip){
+  ensureMap();
+  clearMapForTrip();
+  const stops = trip.days[currentDayIdx].stops;
+  stops.forEach((s,i)=>{
+    if(s.lat && s.lng){
+      const marker=L.marker([s.lat,s.lng],{icon:makeEmojiIcon(s.emoji)}).addTo(map);
+      marker.on("click", ()=>map.setView([s.lat,s.lng],16,{animate:true}));
+      marker.bindPopup(`<b>${escapeHtml(s.emoji||"📍")} ${escapeHtml(s.name||"Spot")}</b><br/>${escapeHtml(s.query||"")}`);
+      markers.push({marker,tripId:trip.id,dayIdx:currentDayIdx,stopIdx:i});
+    }else if(s.query){
+      // async geocode; will trigger renderDetail() on completion
+      upsertMarkerForStop(trip,currentDayIdx,i);
+    }
+  });
+  redrawPolyline(trip,currentDayIdx);
+  fitToMarkers(trip,currentDayIdx);
+}
+
 function renderDetail(){
   let trip = state.trips.find(t=>t.id===currentTripId);
   if(trip) { trip = hydrateTripPalette(trip); }
-  
   if(!trip){ showHome(); return; }
   document.documentElement.style.setProperty('--detailAccent', trip.color || '#e5e7eb');
   detailTop.innerHTML = `
     <div>
       <h2>${escapeHtml(titleForTrip(trip, state.userName||"Me"))}</h2>
-      <div class="meta tripMeta">${escapeHtml(dateRangeLabel(trip))}</div>
+      <div class="meta">${escapeHtml(dateRangeLabel(trip))}</div>
     </div>
     <div class="tripHeaderRight">
       <button id="detailGearBtn" type="button" aria-label="편집">⚙️</button>
       <div class="themeDot" style="background:${trip.color||"#ddd"};"></div>
     </div>
   `;
-
-  
-  
   const gear=document.getElementById("detailGearBtn");
   if(gear){ gear.onclick=()=>{ editingTripId=currentTripId; openTripModal("edit"); }; }
 
-dayTabs.innerHTML="";
+  dayTabs.innerHTML="";
   trip.days.forEach((d,idx)=>{
     const b=document.createElement("button");
     b.className="tab"+(idx===currentDayIdx?" active":"");
@@ -1362,28 +771,32 @@ dayTabs.innerHTML="";
 
   ensureMap();
   setTimeout(()=>{ try{ map && map.invalidateSize(); }catch(e){} }, 0);
-  clearMapForTrip();
 
-  trip.days[currentDayIdx].stops.forEach((s,i)=>{
-    if(s.lat && s.lng){
-      const marker=L.marker([s.lat,s.lng],{icon:makeEmojiIcon(s.emoji)}).addTo(map);
-      marker.on("click", ()=>map.setView([s.lat,s.lng],16,{animate:true}));
-      marker.bindPopup(`<b>${s.emoji||"📍"} ${escapeHtml(s.name||"Spot")}</b><br/>${escapeHtml(s.query||"")}`);
-      markers.push({marker,tripId:trip.id,dayIdx:currentDayIdx,stopIdx:i});
-    }else if(s.query){
-      upsertMarkerForStop(trip,currentDayIdx,i);
-    }
-  });
-  redrawPolyline(trip,currentDayIdx);
-  fitToMarkers(trip,currentDayIdx);
+  // rebuild markers every time (ensures reorder keeps correct stopIdx)
+  rebuildMarkersFromState(trip);
 }
+
+/* ===== Reorder logic (drag & drop) ===== */
+let dragFromIdx = null;
+function reorderStops(day, from, to){
+  if(from===to || from==null || to==null) return;
+  const arr = day.stops;
+  if(from<0 || from>=arr.length || to<0 || to>=arr.length) return;
+  const [moved] = arr.splice(from,1);
+  arr.splice(to,0,moved);
+}
+/* ======================================= */
 
 function renderStops(trip){
   const day = trip.days[currentDayIdx];
   stopsList.innerHTML = "";
+
   day.stops.forEach((s,idx)=>{
     const wrap = document.createElement("div");
     wrap.className = "stop";
+    wrap.setAttribute("draggable","true");
+    wrap.dataset.idx = String(idx);
+
     wrap.innerHTML = `
       <div class="spotHeader">
         <div class="emojiCell" style="position:relative;">
@@ -1399,7 +812,7 @@ function renderStops(trip){
           </div>
         </div>
 
-        <div class="spotNameWrap" style="display:flex;align-items:center;gap:8px;">
+        <div class="spotNameWrap">
           <div class="spotNum">${idx+1}.</div>
           <input id="n-${idx}" value="${escapeAttr(s.name||"")}" placeholder="스팟 이름 (입력)" />
         </div>
@@ -1421,6 +834,33 @@ function renderStops(trip){
     `;
     stopsList.appendChild(wrap);
 
+    /* Drag events (query boxes reorder) */
+    wrap.addEventListener("dragstart",(ev)=>{
+      dragFromIdx = idx;
+      wrap.classList.add("dragging");
+      try{ ev.dataTransfer.effectAllowed = "move"; ev.dataTransfer.setData("text/plain", String(idx)); }catch(e){}
+    });
+    wrap.addEventListener("dragend",()=>{
+      dragFromIdx = null;
+      wrap.classList.remove("dragging");
+      document.querySelectorAll(".stop.drop-target").forEach(el=>el.classList.remove("drop-target"));
+    });
+    wrap.addEventListener("dragover",(ev)=>{
+      ev.preventDefault();
+      wrap.classList.add("drop-target");
+      try{ ev.dataTransfer.dropEffect = "move"; }catch(e){}
+    });
+    wrap.addEventListener("dragleave",()=>wrap.classList.remove("drop-target"));
+    wrap.addEventListener("drop",(ev)=>{
+      ev.preventDefault();
+      wrap.classList.remove("drop-target");
+      const from = (dragFromIdx!=null) ? dragFromIdx : parseInt((()=>{ try{return ev.dataTransfer.getData("text/plain")}catch(e){return ""} })(),10);
+      const to = idx;
+      reorderStops(day, from, to);
+      saveState();
+      renderDetail(); // 번호 자동 재매기기 + 지도/라인 순서도 재빌드
+    });
+
     const emojiBtn = document.getElementById(`emojiBtn-${idx}`);
     const emojiPop = document.getElementById(`emojiPop-${idx}`);
     const hhEl = document.getElementById(`hh-${idx}`);
@@ -1429,7 +869,8 @@ function renderStops(trip){
     const qEl  = document.getElementById(`q-${idx}`);
     const applyMini = document.getElementById(`applyMini-${idx}`);
 
-    document.getElementById(`del-${idx}`).addEventListener("click", ()=>{
+    document.getElementById(`del-${idx}`).addEventListener("click", (ev)=>{
+      ev.preventDefault();
       day.stops.splice(idx,1);
       saveState();
       renderDetail();
@@ -1448,26 +889,10 @@ function renderStops(trip){
 
     async function apply(){
       syncToState();
+      // reset geo so it re-geocodes
+      s.lat = null; s.lng = null; s.addr = null;
       saveState();
-      if(!s.query){
-        s.lat=null; s.lng=null; s.addr=null;
-        saveState();
-        renderDetail();
-        return;
-      }
-      document.getElementById(`status-${idx}`).innerHTML = '<span class="statusDot">⏳</span><span>자동 인식 중...</span>';
-      try{
-        const r = await geocode(s.query);
-        if(r){
-          s.lat = r.lat; s.lng = r.lng; s.addr = r.display_name;
-        }else{
-          s.lat=null; s.lng=null; s.addr=null;
-        }
-      }catch(e){
-        s.lat=null; s.lng=null; s.addr=null;
-      }
-      saveState();
-      renderDetail();
+      renderDetail(); // will call upsertMarkerForStop if query exists
     }
 
     // Emoji picker
@@ -1506,7 +931,6 @@ function renderStops(trip){
   });
 }
 
-
 /* Modals */
 function openNameModal(){
   nameOverlay.classList.add("show");
@@ -1514,9 +938,11 @@ function openNameModal(){
   setTimeout(()=>nameInput.focus(),0);
 }
 function closeNameModal(){ nameOverlay.classList.remove("show"); }
+
 saveNameBtn.addEventListener("click", ()=>{
   const v=nameInput.value.trim();
-  state.userName = v || "Me";
+  if(!v){ nameInput.focus(); return; }
+  state.userName = v;
   saveState();
   setBrand();
   closeNameModal();
@@ -1562,10 +988,6 @@ function resizeDaysForTrip(trip, startStr, endStr){
 }
 
 function openTripModal(mode){
-  populateThemeSelect(document.getElementById('createTheme'), state.tmpTripThemeKey || THEME_PRESETS[0].key);
-
-  populateThemeSelect(document.getElementById('tripTheme'), state.tmpTripThemeKey || THEME_PRESETS[0].key);
-
   tripOverlay.classList.add("show");
   if(mode==="create"){
     editingTripId=null;
@@ -1602,7 +1024,8 @@ saveTripBtn.addEventListener("click", ()=>{
   const withWhom=(withMode==="with")?withWhomInput.value.trim():"";
   const themeKey = colorSelect.value;
   const preset = presetByKey(themeKey);
-let s=null,e=null;
+
+  let s=null,e=null;
   if(!whenTbd.checked){
     s=startDate.value; e=endDate.value;
     if(s && e && s>e){ const tmp=s; s=e; e=tmp; }
@@ -1637,6 +1060,7 @@ let s=null,e=null;
 
 deleteTripBtn.addEventListener("click", ()=>{
   if(!editingTripId) return;
+  if(!confirm("이 여행 프로젝트를 삭제할까?")) return;
   state.trips = state.trips.filter(t=>t.id!==editingTripId);
   saveState();
   closeTripModalFn();
@@ -1648,7 +1072,6 @@ segCards.addEventListener("click", ()=>{ state.viewMode="cards"; saveState(); re
 segCal.addEventListener("click", ()=>{ state.viewMode="calendar"; saveState(); renderHome(); });
 addTripBtn.addEventListener("click", ()=>openTripModal("create"));
 backBtn.addEventListener("click", ()=>showHome());
-editTripBtn.addEventListener("click", ()=>{ editingTripId=currentTripId; openTripModal("edit"); });
 addStopBtn.addEventListener("click", ()=>{
   const trip=state.trips.find(t=>t.id===currentTripId); if(!trip) return;
   trip.days[currentDayIdx].stops.push({time:"",emoji:"📍",name:"",query:""});
@@ -1658,7 +1081,9 @@ yearBtn.addEventListener('click', openYearModal);
 
 /* Helpers */
 
-const EMOJIS = ["✈️","📍","📸","🛍️","🧋","🍜","🥟","🍲","☕","🍰","🛳️","🌉","🏙️","🧖‍♀️","💅","🧸","🎀","🩷","🩶","⭐","🧭","🚇","🚕","🏨","🛫","🛬","🌳","🏛️","🧁","🍸","🍹","🥂","🥢","🍢","🍖","🎡","🪩"];
+/* ✅ 요청 반영 1) EMOJIS 리스트에 👙,👗,🖼️,📿 추가 */
+const EMOJIS = ["✈️","📍","📸","🛍️","🧋","🍜","🥟","🍲","☕","🍰","🛳️","🌉","🏙️","🧖‍♀️","💅","🧸","🎀","🩷","🩶","⭐","🧭","🚇","🚕","🏨","🛫","🛬","🌳","🏛️","🧁","🍸","🍹","🥂","🥢","🍢","🍖","🎡","🪩","👙","👗","🖼️","📿"];
+
 function buildEmojiPop(el, onPick){
   el.innerHTML = EMOJIS.map(e=>`<button class="emojiOpt" type="button" data-e="${e}">${e}</button>`).join("");
   el.querySelectorAll(".emojiOpt").forEach(btn=>{
@@ -1669,45 +1094,59 @@ function buildEmojiPop(el, onPick){
   });
 }
 
-
-  
-  
-  function darkenHex(hex, factor=0.55){
-    // factor: 0~1 smaller => darker
-    const h = String(hex||"").trim();
-    const m = h.match(/^#([0-9a-fA-F]{6})$/);
-    if(!m) return "#111827";
-    const n = parseInt(m[1],16);
-    let r = (n>>16)&255, g=(n>>8)&255, b=n&255;
-    r = Math.round(r*factor); g=Math.round(g*factor); b=Math.round(b*factor);
-    const out = (r<<16)|(g<<8)|b;
-    return "#"+out.toString(16).padStart(6,"0");
-  }
-
-function themeToTitleColor(hex){
-    const m = {
-      "#f7b08a":"#8a3b1f",
-      "#f6b08a":"#8a3b1f",
-      "#bfe7fb":"#0b4a6e",
-      "#cbeeff":"#0b4a6e",
-      "#f3d4e7":"#7a2f57",
-      "#d9d9d9":"#111827",
-      "#e5e7eb":"#111827"
-    };
-    if(!hex) return "#111827";
-    const key = String(hex).toLowerCase();
-    return m[key] || "#111827";
-  }
-
-function formatTripTitle(trip){
-    const who = (trip.withMode === "alone" || !trip.withWhom) ? "" : (", " + trip.withWhom);
-    const namePart = trip.name || "name";
-    const dest = trip.where || trip.destination || "Somewhere";
-    return `${namePart}${who} in ${dest}`;
-  }
-
 function escapeHtml(s){ return String(s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;"); }
 function escapeAttr(s){ return escapeHtml(s).replaceAll('"',"&quot;"); }
+
+/* Year modal */
+function openYearModal(){
+  const modal = document.getElementById("yearModal");
+  const grid = document.getElementById("yearGrid");
+  const cur = (state.calendarYear ?? new Date().getFullYear());
+  const years = [];
+  for(let y=2020; y<=2030; y++) years.push(y);
+  grid.innerHTML = years.map(y=>`<button class="yearOpt ${y===cur?'active':''}" data-y="${y}" type="button">${y}</button>`).join("");
+  grid.querySelectorAll(".yearOpt").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const y = parseInt(btn.getAttribute("data-y"),10);
+      state.calendarYear = y;
+      saveState();
+      closeYearModal();
+      render();
+    });
+  });
+  modal.style.display = "flex";
+  modal.setAttribute("aria-hidden","false");
+}
+function closeYearModal(){
+  const modal = document.getElementById("yearModal");
+  modal.style.display = "none";
+  modal.setAttribute("aria-hidden","true");
+}
+document.addEventListener("click", (ev)=>{
+  const modal = document.getElementById("yearModal");
+  if(modal && modal.style.display==="flex" && ev.target===modal){ closeYearModal(); }
+});
+
+/* Robust delete handler (capture phase to beat card navigation) */
+(function(){
+  function handleDel(ev){
+    const btn = ev.target && ev.target.closest ? ev.target.closest(".tripDelBtn") : null;
+    if(!btn) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+    const id = btn.getAttribute("data-del");
+    if(!id) return;
+    if(confirm("이 여행 프로젝트를 삭제할까요?")){
+      state.trips = (state.trips||[]).filter(t => String(t.id)!==String(id));
+      if(currentTripId && String(currentTripId)===String(id)){ currentTripId=null; }
+      saveState();
+      render();
+    }
+  }
+  document.addEventListener("pointerdown", handleDel, true);
+  document.addEventListener("click", handleDel, true);
+})();
 
 /* Boot */
 function boot(){
@@ -1718,80 +1157,13 @@ function boot(){
   renderHome();
 }
 boot();
-
-  // Year modal
-  
-  function setCalendarYear(y){
-  state.calendarYear = Number(y);
-  saveState();
-  renderCalendar();
-}
-
-function openYearModal(){
-    const modal = document.getElementById("yearModal");
-    const grid = document.getElementById("yearGrid");
-    const cur = (state.calendarYear ?? new Date().getFullYear());
-    const years = [];
-    for(let y=2020; y<=2030; y++) years.push(y);
-    grid.innerHTML = years.map(y=>`<button class="yearBtn ${y===cur?'active':''}" data-y="${y}" type="button">${y}</button>`).join("");
-    grid.querySelectorAll(".yearBtn").forEach(btn=>{
-      btn.addEventListener("click", ()=>{
-        const y = parseInt(btn.getAttribute("data-y"),10);
-        state.calendarYear = y;
-        saveState();
-        closeYearModal();
-        render();
-      });
-    });
-    modal.style.display = "flex";
-    modal.setAttribute("aria-hidden","false");
-  }
-  function closeYearModal(){
-    const modal = document.getElementById("yearModal");
-    modal.style.display = "none";
-    modal.setAttribute("aria-hidden","true");
-  }
-  document.addEventListener("click", (ev)=>{
-    const modal = document.getElementById("yearModal");
-    if(modal && modal.style.display==="flex" && ev.target===modal){ closeYearModal(); }
-  });
-  const yearModalEl = document.getElementById("yearModal");
-  const yearModalCloseBtn = document.getElementById("yearModalClose");
-  if(yearModalCloseBtn) yearModalCloseBtn.addEventListener("click", closeYearModal);
-  if(yearModalEl) yearModalEl.addEventListener("click",(e)=>{ if(e.target===yearModalEl) closeYearModal(); });
-
-
-  // Robust delete handler (capture phase to beat card navigation)
-  (function(){
-    function handleDel(ev){
-      const btn = ev.target && ev.target.closest ? ev.target.closest(".tripDelBtn") : null;
-      if(!btn) return;
-      ev.preventDefault();
-      ev.stopPropagation();
-      if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
-      const id = btn.getAttribute("data-del");
-      if(!id) return;
-      if(confirm("이 여행 프로젝트를 삭제할까?")){
-        state.trips = (state.trips||[]).filter(t => String(t.id)!==String(id));
-        if(currentTripId && String(currentTripId)===String(id)){ currentTripId=null; }
-        saveState();
-        render();
-      }
-    }
-    document.addEventListener("pointerdown", handleDel, true);
-    document.addEventListener("pointerup", handleDel, true);
-    document.addEventListener("mousedown", handleDel, true);
-    document.addEventListener("mouseup", handleDel, true);
-    document.addEventListener("click", handleDel, true);
-  })();
-
 </script>
 
   <div class="modalOverlay" id="yearModal" aria-hidden="true" style="display:none;">
     <div class="modalCard" role="dialog" aria-modal="true" aria-label="연도 선택">
-      <div class="modalHead">
+      <div class="modalHead2">
         <div class="modalTitle">연도 선택</div>
-        <button class="modalClose" id="yearModalClose" type="button">✕</button>
+        <button class="modalClose" id="yearModalClose" type="button" onclick="(function(){const m=document.getElementById('yearModal');m.style.display='none';m.setAttribute('aria-hidden','true');})();">✕</button>
       </div>
       <div class="yearGrid" id="yearGrid"></div>
     </div>
