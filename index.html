@@ -764,7 +764,7 @@ function fitToMarkers(trip, dayIdx){
 }
 
 
-async function geocode(query){
+async function geocode(query, trip){
   const q0 = String(query||"").trim();
   if(!q0) return null;
 
@@ -844,7 +844,6 @@ async function geocode(query){
     }
   }catch(e){
     // fall through to Nominatim
-  }
   }
 
   // 2) Nominatim (OSM) fallback
