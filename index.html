@@ -398,6 +398,15 @@
         </div>
 
         <div class="field">
+          <label>국내/해외</label>
+          <div class="tog">
+            <div class="chip active" id="tripDomestic">국내 (카카오맵)</div>
+            <div class="chip" id="tripOverseas">해외 (OSM)</div>
+          </div>
+          <div class="hint" style="margin-top:6px;">국내 여행은 카카오 지오코딩·카카오맵, 해외 여행은 OpenStreetMap(OSM) 지오코딩·지도 사용.</div>
+        </div>
+
+        <div class="field">
           <label>With whom</label>
           <div class="tog">
             <div class="chip active" id="withAlone">Alone</div>
@@ -505,6 +514,16 @@ if(state && typeof state==="object"){
   if(!state.trips) state.trips=[];
 }
 
+// Migration: infer domestic/overseas if missing (best-effort)
+if(state.trips && state.trips.length){
+  for(const t of state.trips){
+    if(typeof t.isDomestic !== "boolean"){
+      const w = String(t.where||"");
+      t.isDomestic = /[ㄱ-ㅎㅏ-ㅣ가-힣]/.test(w); // default: 한글 포함이면 국내로 가정
+    }
+  }
+}
+
 if(!state.trips || !state.trips.length){
   const sky = presetByKey("Sky");
   state.trips = [{
@@ -515,6 +534,7 @@ if(!state.trips || !state.trips.length){
     withMode: "with",
     withWhom: "Amy",
     themeKey: "Sky",
+    isDomestic: false,
     color: sky.themeAccent,
     titleColor: sky.titleColor,
     queryBg: sky.queryBg,
@@ -548,6 +568,8 @@ const tripOverlay=document.getElementById("tripOverlay");
 const tripModalTitle=document.getElementById("tripModalTitle");
 const closeTripModal=document.getElementById("closeTripModal");
 const whereInput=document.getElementById("whereInput");
+const tripDomestic=document.getElementById("tripDomestic");
+const tripOverseas=document.getElementById("tripOverseas");
 const withAlone=document.getElementById("withAlone");
 const withSomeone=document.getElementById("withSomeone");
 const withWhomInput=document.getElementById("withWhomInput");
@@ -565,6 +587,10 @@ const addStopBtn=document.getElementById("addStopBtn");
 
 let currentTripId=null;
 let currentDayIdx=0;
+
+function currentTrip(){
+  return state.trips.find(t=>t.id===currentTripId) || null;
+}
 
 /* Map */
 let mapEngine = null; // "kakao" | "leaflet"
@@ -605,50 +631,77 @@ function showMapError(msg){
   el.appendChild(banner);
 }
 
-function ensureMap(){
-  if(mapEngine) return;
+function desiredEngineForTrip(trip){
+  return (trip && trip.isDomestic) ? "kakao" : "leaflet";
+}
 
+function destroyMap(){
+  const container = document.getElementById("map");
+  try{
+    if(mapEngine==="leaflet" && leafletMap){
+      leafletMap.remove();
+    }
+  }catch(e){}
+  // Kakao doesn't have a hard destroy; just drop refs and clear container
+  mapEngine = null;
+  map = null;
+  kakaoPolyline = null;
+  leafletMap = null;
+  leafletMarkersLayer = null;
+  leafletPolyline = null;
+  markers = [];
+  if(container) container.innerHTML = "";
+}
+
+function ensureMapEngine(desired){
   const container = document.getElementById("map");
   if(!container) return;
 
-  // Try Kakao first
-  if(window.kakao && window.kakao.maps && typeof window.kakao.maps.Map === "function"){
-    try{
-      const options = { center: new window.kakao.maps.LatLng(31.2304, 121.4737), level: 6 };
-      map = new window.kakao.maps.Map(container, options);
-      kakaoPolyline = new window.kakao.maps.Polyline({ path: [], strokeWeight: 4, strokeOpacity: 0.85 });
-      kakaoPolyline.setMap(map);
-      mapEngine = "kakao";
-      return;
-    }catch(e){
-      // fall through to Leaflet
+  // default desired
+  desired = desired || "leaflet";
+
+  // If already correct engine, ensure layout for Kakao after view toggles
+  if(mapEngine && mapEngine===desired){
+    if(mapEngine==="kakao" && map && typeof map.relayout==="function"){
+      setTimeout(()=>{ try{ map.relayout(); }catch(e){} }, 0);
     }
+    return;
   }
 
-  // Leaflet fallback (works on file:// and without Kakao domain registration)
-  try{
-    leafletMap = L.map(container, { zoomControl: true, attributionControl: true })
-      .setView([31.2304, 121.4737], 12);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-      attribution: "&copy; OpenStreetMap"
-    }).addTo(leafletMap);
+  // Switch engine: destroy and recreate
+  destroyMap();
 
+  // Create desired engine
+  if(desired==="kakao"){
+    if(window.kakao && window.kakao.maps && typeof window.kakao.maps.Map === "function"){
+      try{
+        const options = { center: new window.kakao.maps.LatLng(31.2304, 121.4737), level: 6 };
+        map = new window.kakao.maps.Map(container, options);
+        kakaoPolyline = new window.kakao.maps.Polyline({ path: [], strokeWeight: 4, strokeOpacity: 0.85 });
+        kakaoPolyline.setMap(map);
+        mapEngine = "kakao";
+        // relayout after being shown
+        if(typeof map.relayout==="function"){
+          setTimeout(()=>{ try{ map.relayout(); }catch(e){} }, 0);
+        }
+        return;
+      }catch(e){
+        // fall through to Leaflet
+      }
+    }
+    // If Kakao requested but not available, fall back to Leaflet
+  }
+
+  // Leaflet (OSM)
+  try{
+    leafletMap = L.map(container, { zoomControl: true, attributionControl: true });
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap" }).addTo(leafletMap);
     leafletMarkersLayer = L.layerGroup().addTo(leafletMap);
     leafletPolyline = L.polyline([], { weight: 4, opacity: 0.85 }).addTo(leafletMap);
-
+    leafletMap.setView([31.2304,121.4737], 6);
     mapEngine = "leaflet";
-    map = leafletMap;
-
-    // Explain why Kakao didn't load (most common causes)
-    showMapError(
-      `카카오 지도 로딩이 안 돼서 OpenStreetMap(대체 지도)로 표시 중이다.<br/>
-       • GitHub Pages라면: Kakao Developers에서 Web 도메인 등록 필요<br/>
-       • 로컬(file://)로 열면: 카카오 지도는 차단될 수 있음`
-    );
   }catch(e){
-    mapEngine = "none";
-    showMapError("지도 로딩 실패 — 콘솔 오류 확인 필요");
+    // nothing else we can do
   }
 }
 
@@ -751,8 +804,10 @@ async function geocode(query){
     }
   }
 
+  const useKakao = !!(trip && trip.isDomestic);
+
   // 1) Kakao (addressSearch -> keywordSearch) with variants
-  try{
+  if(useKakao) try{
     if(window.kakao && window.kakao.maps && window.kakao.maps.services){
       const geocoder = new window.kakao.maps.services.Geocoder();
       const places = new window.kakao.maps.services.Places();
@@ -790,6 +845,7 @@ async function geocode(query){
   }catch(e){
     // fall through to Nominatim
   }
+  }
 
   // 2) Nominatim (OSM) fallback
   const url = "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" + encodeURIComponent(q0);
@@ -803,13 +859,13 @@ async function geocode(query){
 /* IMPORTANT: markers' stopIdx must follow day.stops order.
    After reordering, we rebuild markers from state in renderDetail(). */
 async function upsertMarkerForStop(trip, dayIdx, stopIdx){
-  ensureMap();
+  ensureMapEngine(desiredEngineForTrip(currentTrip()));
   const stop = trip.days[dayIdx].stops[stopIdx];
   if(!stop || !stop.query) return;
   const statusEl = document.getElementById(`status-${stopIdx}`);
   if(statusEl) statusEl.textContent = "자동 인식 중...";
   try{
-    const r = await geocode(stop.query);
+    const r = await geocode(stop.query, trip);
     if(!r){
       if(statusEl) statusEl.textContent = "⚠ 위치 자동 인식 실패 — Query를 더 정확한 주소/지점명으로 바꿔";
       return;
@@ -921,7 +977,7 @@ function renderCalendar(){
 }
 
 function rebuildMarkersFromState(trip){
-  ensureMap();
+  ensureMapEngine(desiredEngineForTrip(currentTrip()));
   clearMapForTrip();
   const stops = trip.days[currentDayIdx].stops;
 
@@ -989,7 +1045,7 @@ function renderDetail(){
 
   renderStops(trip);
 
-  ensureMap();
+  ensureMapEngine(desiredEngineForTrip(currentTrip()));
   setTimeout(()=>{ try{ if(mapEngine==='leaflet' && leafletMap){ leafletMap.invalidateSize(); } if(mapEngine==='kakao' && map && typeof map.relayout==='function'){ map.relayout(); } }catch(e){} }, 0);
 
   // rebuild markers every time (ensures reorder keeps correct stopIdx)
@@ -1182,6 +1238,19 @@ function setWithMode(mode){
     state._modalWithMode="alone";
   }
 }
+
+function setTripRegion(region){
+  if(region==="domestic"){
+    tripDomestic.classList.add("active"); tripOverseas.classList.remove("active");
+    state._modalTripRegion="domestic";
+  }else{
+    tripOverseas.classList.add("active"); tripDomestic.classList.remove("active");
+    state._modalTripRegion="overseas";
+  }
+}
+
+tripDomestic.addEventListener("click", ()=> setTripRegion("domestic"));
+tripOverseas.addEventListener("click", ()=> setTripRegion("overseas"));
 function syncWhenInputs(){
   const tbd=whenTbd.checked;
   startDate.disabled=tbd;
@@ -1218,6 +1287,7 @@ function openTripModal(mode){
     whenTbd.checked=true;
     startDate.value=""; endDate.value="";
     setWithMode("alone");
+    setTripRegion("overseas");
   }else{
     const trip=state.trips.find(t=>t.id===editingTripId);
     if(!trip) return;
@@ -1231,6 +1301,7 @@ function openTripModal(mode){
     endDate.value=trip.endDate||"";
     setWithMode(trip.withMode||"alone");
     withWhomInput.value=trip.withWhom||"";
+    setTripRegion(trip.isDomestic ? "domestic" : "overseas");
     syncWhenInputs();
   }
   syncWhenInputs();
@@ -1244,6 +1315,7 @@ saveTripBtn.addEventListener("click", ()=>{
   const withWhom=(withMode==="with")?withWhomInput.value.trim():"";
   const themeKey = colorSelect.value;
   const preset = presetByKey(themeKey);
+  const isDomestic = (state._modalTripRegion==="domestic");
 
   let s=null,e=null;
   if(!whenTbd.checked){
@@ -1255,6 +1327,7 @@ saveTripBtn.addEventListener("click", ()=>{
     const trip=state.trips.find(t=>t.id===editingTripId);
     if(!trip){ closeTripModalFn(); return; }
     trip.where=where;
+    trip.isDomestic = isDomestic;
     trip.withMode=withMode;
     trip.withWhom=withWhom;
     trip.themeKey = themeKey;
@@ -1266,7 +1339,7 @@ saveTripBtn.addEventListener("click", ()=>{
     trip.endDate=e||null;
     resizeDaysForTrip(trip, trip.startDate, trip.endDate);
   }else{
-    const trip={ id:uid(), where, startDate:s||null, endDate:e||null, withMode, withWhom,
+    const trip={ id:uid(), where, startDate:s||null, endDate:e||null, withMode, withWhom, isDomestic,
       themeKey: themeKey, color: preset.themeAccent, titleColor: preset.titleColor, queryBg: preset.queryBg, onAccent: preset.onAccent,
       days:[] };
     if(trip.startDate && trip.endDate) resizeDaysForTrip(trip, trip.startDate, trip.endDate);
