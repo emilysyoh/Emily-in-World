@@ -312,6 +312,7 @@
       </div>
 
       <div class="actions" id="homeActions">
+        <button class="btn small" id="backupBtn" type="button" title="모든 여행을 파일로 저장 (새 사이트로 옮길 때 사용)">백업</button>
         <div class="seg" id="viewSeg">
           <button id="segCards" class="active">카드</button>
           <button id="segCal">캘린더</button>
@@ -1451,6 +1452,18 @@ document.addEventListener("click", (ev)=>{
   document.addEventListener("pointerdown", handleDel, true);
   document.addEventListener("click", handleDel, true);
 })();
+
+/* Backup: 새 사이트(me-in-world.vercel.app)의 '가져오기'와 같은 형식 */
+document.getElementById("backupBtn").addEventListener("click", ()=>{
+  const payload = { app:"name-in-world", version:1, exportedAt:new Date().toISOString(),
+    data:{ userName: state.userName||"", trips: state.trips||[] } };
+  const blob = new Blob([JSON.stringify(payload,null,2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `${state.userName||"name"}-in-World_backup_${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+});
 
 /* Boot */
 function boot(){
